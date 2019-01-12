@@ -7,6 +7,7 @@ public class CollectorMain {
 		Collector collector = new Collector();
 
 		// 実行
-		collector.executeMain();
+		// collector.executeMain();
+		collector.executeMainWithoutLineTrace();
 	}
 }

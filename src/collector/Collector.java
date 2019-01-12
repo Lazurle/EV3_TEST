@@ -46,7 +46,7 @@ public class Collector {
 			System.out.println(receive_message_reception);
 
 			if (receive_message_reception.equals("protocol|true")) {
-				System.out.println("true");
+				System.out.println("protocol|true");
 			} else if (receive_message_reception.equals("protocol|false")) {
 				System.out.println("false");
 				continue;
@@ -60,17 +60,15 @@ public class Collector {
 			// 荷物番号と中継所引き渡し完了の加工命令
 			String send_message = this.adjust(Adjustment.frglNumDeliComp);
 
-			while (true) {
-				if (isSend == true) {
-					break;
-				}
+			try {
+				// シグナルを送信する
+				isSend = telecommunication.sendSignal(send_message, Receiver.reception, Receiver.collector, 10);
+			} catch (Exception e) {
+				System.out.println(e);
+			}
 
-				try {
-					// シグナルを送信する
-					isSend = telecommunication.sendSignal(send_message, Receiver.reception, Receiver.collector, 10);
-				} catch (Exception e) {
-					System.out.println(e);
-				}
+			if (isSend == false) {
+				continue;
 			}
 			break;
 		}
@@ -104,24 +102,19 @@ public class Collector {
 
 			// Delay.msDelay(10);
 
-			while (true) {
-				if (receive_message != "") {
-					break;
-				}
+			System.out.println("fragile num receiving...");
+			System.out.println("receive_message: " + receive_message);
 
-				System.out.println("fragile num receiving...");
-				System.out.println("receive_message: " + receive_message);
-
-				try {
-					receive_message = telecommunication.receiveSignal(Receiver.reception, Receiver.collector, 10);
-				} catch (Exception e) {
-					System.out.println(e);
-				}
+			try {
+				receive_message = telecommunication.receiveSignal(Receiver.reception, Receiver.collector, 10);
+			} catch (Exception e) {
+				System.out.println(e);
 			}
 
-			if (!receive_message.equals("")) {
-				break;
+			if (receive_message.equals("")) {
+				continue;
 			}
+			break;
 		}
 
 		System.out.println("ok3");
@@ -155,6 +148,7 @@ public class Collector {
 			String receive_message_relay = collector_protocol.makeProtocol(Receiver.relay);
 
 			if (receive_message_relay.equals("protocol|true")) {
+				System.out.println("protocol|true");
 			} else if (receive_message_relay.equals("protocol|false")) {
 				System.out.println("false");
 				continue;
@@ -165,26 +159,25 @@ public class Collector {
 
 			send_message = this.adjust(Adjustment.adjustFrglNum);
 
-			deliComp = false;
-			break;
-		}
+			//deliComp = false;
 
-		while (true) {
-			if (deliComp == true) {
-				break;
-			}
+			Boolean isSend = false;
 
 			try {
 				System.out.println(send_message);
-				deliComp = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
+				isSend = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
 			} catch (Exception e) {
 				System.out.println(e);
 			}
-		}
 
-		// 収集ロボットが所有している荷物を破棄
-		if (deliComp == true) {
+			if (isSend == false) {
+				continue;
+			}
+
+			// 収集ロボットが所有している荷物を破棄
 			frglNum = 0;
+
+			break;
 		}
 	}
 
@@ -198,7 +191,6 @@ public class Collector {
 
 			if (receive_message_relay.equals("protocol|true")) {
 				System.out.println("true");
-				break;
 			} else if (receive_message_relay.equals("protocol|false")) {
 				System.out.println("false");
 				continue;
@@ -206,37 +198,31 @@ public class Collector {
 				System.out.println("error");
 				continue;
 			}
-		}
 
-		while (true) {
 			// 情報を加工する(共有変数の値を送信する命令)
 			String send_message = this.adjust(Adjustment.sendLock);
 			Boolean isSuccess = false;
 
-			while (true) {
-				try {
-					isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
+			try {
+				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
+			} catch (Exception e) {
+				System.out.println(e);
+			}
 
-					if (isSuccess == true) {
-						break;
-					}
-				} catch (Exception e) {
-					System.out.println(e);
-				}
+			if (isSuccess == false) {
+				continue;
 			}
 
 			String receive_message = "";
 
-			while (true) {
-				if (!receive_message.equals("")) {
-					break;
-				}
+			try {
+				receive_message = telecommunication.receiveSignal(Receiver.relay, Receiver.collector, 10);
+			} catch (Exception e) {
+				System.out.println(e);
+			}
 
-				try {
-					receive_message = telecommunication.receiveSignal(Receiver.relay, Receiver.collector, 10);
-				} catch (Exception e) {
-					System.out.println(e);
-				}
+			if (receive_message.equals("")) {
+				continue;
 			}
 
 			System.out.println(receive_message);
@@ -246,9 +232,9 @@ public class Collector {
 			// 中継所移動許可が出ていない場合、もう一度
 			if (goToRelay == false) {
 				continue;
-			} else {
-				break;
 			}
+
+			break;
 		}
 	}
 
@@ -261,8 +247,7 @@ public class Collector {
 			String receive_message_relay = collector_protocol.makeProtocol(Receiver.relay);
 
 			if (receive_message_relay.equals("protocol|true")) {
-				System.out.println("true");
-				break;
+				System.out.println("protocol|true");
 			} else if (receive_message_relay.equals("protocol|false")) {
 				System.out.println("false");
 				continue;
@@ -270,24 +255,26 @@ public class Collector {
 				System.out.println("error");
 				continue;
 			}
-		}
 
-		// 情報を加工する(共有変数を0にする命令)
-		String send_message = this.adjust(Adjustment.setLockFalse);
-		boolean isSuccess = false; // 共有変数開放が成功または失敗
+			// 情報を加工する(共有変数を0にする命令)
+			String send_message = this.adjust(Adjustment.setLockFalse);
+			boolean isSuccess = false; // 共有変数開放が成功または失敗
 
-		while (true) {
-			if (isSuccess == true) {
-				break;
-			}
 			try {
 				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
 			} catch (Exception e) {
 				System.out.println(e);
 			}
-		}
 
-		goToRelay = false;
+			if (isSuccess == false) {
+				continue;
+			}
+
+			// 中継所エリア進入許可解除
+			goToRelay = false;
+
+			break;
+		}
 	}
 
 	/**
@@ -300,7 +287,7 @@ public class Collector {
 
 		// 共有変数の値を送信する命令
 		if (order == Adjustment.sendLock) {
-			send_message = Collector_Relay.syncLock.toString();
+			send_message = Collector_Relay.sendLock.toString();
 		}
 
 		// 共有変数を0にする命令
