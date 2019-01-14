@@ -18,44 +18,50 @@ public class ControlOrder {
 
 		String[] msg = receDetail.split("\\|", 0);
 
-		switch (receiver) {
-		case deliver:
-			Relay_Deliver deliOdr = Relay_Deliver.valueOf(msg[0]);
-			exeOrder(deliOdr, msg);
-			break;
+		try {
+			switch (receiver) {
+			case deliver:
+				Relay_Deliver deliOdr = Relay_Deliver.valueOf(msg[0]);
+				exeOrder(deliOdr, msg);
+				break;
 
-		case collector:
-			Collector_Relay ColleOdr = Collector_Relay.valueOf(msg[0]);
-			exeOrder(ColleOdr, msg);
-			break;
+			case collector:
+				Collector_Relay ColleOdr = Collector_Relay.valueOf(msg[0]);
+				exeOrder(ColleOdr, msg);
+				break;
 
-		case hq:
-			Relay_HQ hqOder = Relay_HQ.valueOf(msg[0]);
-			exeOrder(hqOder, msg);
-			break;
+			case hq:
+				Relay_HQ hqOder = Relay_HQ.valueOf(msg[0]);
+				exeOrder(hqOder, msg);
+				break;
 
-		default:
-			break;
+			default:
+				break;
+			}
+		} catch (Exception e) {
+			System.err.println(e);
 		}
 
 	}
 
 	void exeOrder(Collector_Relay odrNum, String[] msg) {
 		switch (odrNum) {
+		// "protocol|relay"
 		case protocol:
-			relay.judgeProtocol(Receiver.collector, msg);
+			relay.judgeProtocol(Receiver.collector, msg[1]);
 			break;
 
+		// "sendFrglNum|20190113012832"
 		case sendFrglNum:
-			relay.saveFragileNum(msg);
+			relay.saveFragileNum(msg[1]);
 			break;
 
-		case syncLock: // sendLock
-			relay.syncLock(Receiver.collector);
+		case sendLock:
+			relay.sendLock(Receiver.collector);
 			break;
 
 		case setLockFalse:
-			relay.cl.setLock(false);
+			relay.lock.setLock(false);
 			break;
 
 		default:
@@ -65,12 +71,13 @@ public class ControlOrder {
 
 	void exeOrder(Relay_Deliver odrNum, String[] msg) {
 		switch (odrNum) {
+		// "protocol|relay"
 		case protocol:
-			relay.judgeProtocol(Receiver.deliver, msg);
+			relay.judgeProtocol(Receiver.deliver, msg[1]);
 			break;
 
 		case sendHasFrgl:
-			relay.sendHasFrgl();
+			relay.prepareFrgl();
 			break;
 
 		case syncFrglInfo:
@@ -78,27 +85,21 @@ public class ControlOrder {
 			break;
 
 		case sendLock:
-			relay.syncLock(Receiver.deliver);
+			relay.sendLock(Receiver.deliver);
 			break;
 
 		case setLockFalse:
-			relay.cl.setLock(false);
+			relay.lock.setLock(false);
 			break;
 
-		case backWaitingArea:
-			relay.cl.setLock(false);
-			break;
-
-		case goHouse:
-			relay.cl.setLock(false);
-			break;
-
+		// "reportDeliFail|200012241224|absent"
 		case reportDeliFail:
-			relay.saveDeliFail(msg);
+			relay.saveDeliFail(msg[1], msg[2]);
 			break;
 
+		// "reportDeliResult|200012241224|5"
 		case reportDeliResult:
-			relay.saveDeliComp(msg);
+			relay.saveDeliComp(msg[1], msg[2]);
 			break;
 
 		default:
@@ -106,15 +107,25 @@ public class ControlOrder {
 		}
 	}
 
-	void exeOrder(Relay_HQ odrNum, String[] msg) {
+	void exeOrder(Relay_HQ odrNum, String[] m) {
 		switch (odrNum) {
-		case getObs:
-			relay.saveFrglInfo(msg);
+		// syncObs|200012241224|clientman|09064758475284632|2-2|houseman|090244867442749563|1-3
+		case syncObs:
+			relay.saveFrglInfo(m[1], m[2], m[4], m[5], m[7]);
 			break;
 
 		default:
 			break;
 		}
+	}
+
+	void setLock(Receiver receiver, Boolean b) {
+		if (receiver == Receiver.collector)
+			relay.lTimerColle.setLock(b);
+		else if (receiver == Receiver.deliver)
+			relay.lTimerDeli.setLock(b);
+		else if (receiver == Receiver.hq)
+			relay.lTimerHQ.setLock(b);
 	}
 
 }

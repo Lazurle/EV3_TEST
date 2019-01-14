@@ -15,7 +15,7 @@ import telecommunication.code.Reception_Collector;
 public class Collector {
 	public static final int MAX_WHILE = 10;
 
-	private long frglNum = 12345; // 荷物番号
+	private long frglNum = 0; // 荷物番号
 	private boolean deliComp = false; // 中継引き渡し完了
 	private boolean isLock = false; // 収集ロボットが持つ共有変数
 	private boolean goToRelay = false; // 中継所への移動許可
@@ -204,7 +204,7 @@ public class Collector {
 			Boolean isSuccess = false;
 
 			try {
-				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
+				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 120);
 			} catch (Exception e) {
 				System.out.println(e);
 			}
@@ -216,7 +216,7 @@ public class Collector {
 			String receive_message = "";
 
 			try {
-				receive_message = telecommunication.receiveSignal(Receiver.relay, Receiver.collector, 10);
+				receive_message = telecommunication.receiveSignal(Receiver.relay, Receiver.collector, 120);
 			} catch (Exception e) {
 				System.out.println(e);
 			}

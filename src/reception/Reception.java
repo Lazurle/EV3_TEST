@@ -19,11 +19,15 @@ import telecommunication.ThreadState;
 import telecommunication.code.Reception_Collector;
 import telecommunication.code.Reception_HQ;
 
+/**
+ * 受付所のクラス
+ * @author bp16052 鈴木亘
+ */
 public class Reception {
 
 	private Queue<Fragile> fragile = new LinkedList<Fragile>();		//配達する荷物の待ち行列
 
-	private ReceptionMonitor recpMonitor = new ReceptionMonitor();
+	private ReceptionMonitor recpMonitor = new ReceptionMonitor();	//受付所画面のインスタンス
 
 	private Fragile deliWaitFrgl;	//中継所引き渡し完了待ち荷物
 
@@ -34,8 +38,58 @@ public class Reception {
 	private RecpProtocol rcpPrtcl = new RecpProtocol();		//プロトコル
 
 	private ThreadState state = ThreadState.Death;		//通信の状態を表すフィールド
-	
+
 	private Queue<String> sendContentToHQ = new LinkedList<String>(); // 本部へ送れなかったデータを格納する待ち行列
+
+
+	/**
+	 *  コントロールメソッド
+	 *  受付所の一連の動作を行うメインメソッド
+	 *  荷物の依頼　→　収集ロボットに荷物を渡す　→　中継所引き渡し報告を受け取る　→　本部に報告　→　荷物の依頼　→　...	の順で繰り返す
+	 */
+	public static void main(String args[]) throws IllegalArgumentException, IOException, InterruptedException {
+		Reception rcp = new Reception();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+		Calendar deliWaitStart = Calendar.getInstance();		//収集ロボットに荷物を渡した時間を記録する変数
+		boolean waitFlag = true;	//deliWaitStartの更新をするかどうかを判定する変数
+        boolean deliWaitFlag = false;
+
+        while(true){
+
+            System.out.println("-------------------入力待ち中----------------------------------------");
+
+			// 荷物の依頼を行う
+			rcp.requestFrgl(deliWaitFlag, reader);
+
+            System.out.println("-------------------処理中-------------------------------------------");        	//以下はタイムアウトしてもしなくても動作する処理
+
+            // 荷物を渡す
+			if(rcp.sendFragile()){
+				if(waitFlag){
+					deliWaitStart = Calendar.getInstance();
+					deliWaitStart.add(Calendar.MINUTE, 5);	//荷物を渡した5分後に中継所引き渡し報告を受け取るを行う
+					waitFlag = false;
+				}
+			}
+
+    		// 中継所引き渡し結果を受け取る
+    		if(rcp.deliWaitFrgl != null){
+    			deliWaitFlag = deliWaitStart.before(Calendar.getInstance());
+    			if(deliWaitFlag){
+    				rcp.receivePassingResult();
+    				if(rcp.deliWaitFrgl == null){
+    					waitFlag = true;
+    					deliWaitFlag = false;
+    				}
+    			}
+    		}
+
+    		// 本部へ報告する
+    		rcp.sendDataToHQ();
+
+        	Thread.sleep(1000);
+        }//ここまでwhile
+	}//ここまでmain
 
 	/**
 	 * 依頼情報が適切か判定するメソッド
@@ -91,7 +145,7 @@ public class Reception {
 
 		return false;
 	}
-	
+
 	/**
 	 * 荷物番号を計算するメソッド
 	 * @param cal :依頼を受け付けた時間
@@ -155,11 +209,13 @@ public class Reception {
 			data = order + "|" + frglNum;
 			break;
 
+		/*
 		// 中継所引き渡し完了についての情報を文字列にまとめる処理
 		case "setFailedPassing":
 			num = this.deliWaitFrgl.getFrglNum();
 			data = "setFailedPassing" + "|" + num + "|" + this.deliWaitFrgl.getObsStats().toString();
 			break;
+		*/
 		case "makeFragile":
 			String[] clientInfo = this.deliWaitFrgl.getClientInfo();
 			String[] houseInfo = this.deliWaitFrgl.getHouseInfo();
@@ -193,28 +249,28 @@ public class Reception {
 	 *  依頼情報を入力データから作成し、荷物を作成する
 	 *  @param flag :荷物送信後、収集ロボットと通信を行うか判定するデータ（trueなら収集ロボットと通信可能）
 	 *  @param reader :標準入力を使うためのデータ
-	 */	
+	 */
 	private void requestFrgl(boolean flag, BufferedReader reader) throws IOException, InterruptedException {
 		String ans = "";
 		int waitTime = 0;
-        	
+
         if(this.fragile.isEmpty() && this.deliWaitFrgl == null && sendContentToHQ.isEmpty() && !flag){		//やるべき動作がなければ、依頼の入力を長時間待つ
-        		waitTime = 60; 
+        		waitTime = 60;
         }
         else waitTime = 10;			//やるべき動作があるなら待ち時間を10秒に設定
 
         //Enterが押されず waitTime秒経ったらcatch内へ
         Calendar targetTime=Calendar.getInstance();
         targetTime.add(Calendar.SECOND, waitTime);
-           	
+
         System.out.println("依頼情報を入力するにはEnterを押してください");
-           	
+
 		while(targetTime.after(Calendar.getInstance())){
 			if(reader.ready()){
 				ans = reader.readLine();
 				break;
 			}
-        	Thread.sleep(100);  
+        	Thread.sleep(100);
 		}
 
 		//入力の処理
@@ -247,7 +303,7 @@ public class Reception {
 	/**
 	 *  荷物を渡すメソッド
 	 *  @return 荷物番号送信の成否（成功したらtrue, 失敗ならfalse）
-	 */	
+	 */
 	private boolean sendFragile() throws IllegalArgumentException, RuntimeException {
 		if (!this.fragile.isEmpty() && this.deliWaitFrgl == null) {
 			String frglData = this.adjustInfo(Reception_Collector.syncFrglNum.toString());
@@ -291,50 +347,40 @@ public class Reception {
 	 *  中継所引き渡し結果を受け取るメソッド
 	 */
 	private void receivePassingResult() throws IOException, RuntimeException {
-		String sendContent = "";
+		//String sendContent = "";
 		this.state = this.teleToCllct.getThreadState_onlyOnce();
 
 		if(this.state == ThreadState.Death && this.rcpPrtcl.makeProtocol()){
 			System.out.println("中継所引き渡し報告受取中");
 			String recvContent = this.teleToCllct.receiveSignal(Receiver.collector,Receiver.reception, 10);
-			
+
 			//ThreadStateを確認して、その状態から処理を決定する
 			this.state = this.teleToCllct.getThreadState_onlyOnce();
 			if(this.state == ThreadState.Death);
 			else if(this.state == ThreadState.Success)
 				recvContent = this.teleToCllct.getReceiveDetail_onlyOnce();
 			else return;
-			
+
 			System.out.println("受信内容：" + recvContent);
 			this.save(recvContent, save.deliCompFrglNum, this.deliWaitFrgl);
-			
+
 			if (this.deliWaitFrgl.getObsStats() == ObsStats.failedPassing) {
 				// 中継所引き渡し失敗の場合
-				sendContent = this.adjustInfo(Reception_HQ.setFailedPassing.toString());
 				Fragile frgl = this.pickFragile();	//中継所引き渡し完了待ち荷物を荷物の待ち行列に追加
 				frgl.setDeliStats(DeliStats.awaiting);
 				this.fragile.add(frgl);
-				System.out.println("中継所引き渡し失敗を本部に報告中");
-				if (this.teleToCllct.sendSignal(sendContent, Receiver.hq, Receiver.reception, 10)) {
-					this.sendContentToHQ.add(sendContent);
-				}
 				return;
 			} else {
 				// 中継所引き渡し完了の場合
-				sendContent = this.adjustInfo(Reception_HQ.setFailedPassing.toString());
 				this.deliWaitFrgl = null;
-				System.out.println("中継所引き渡し成功を本部に報告中");
-				if (this.teleToHQ.sendSignal(sendContent, Receiver.hq, Receiver.reception, 10)) {
-					this.sendContentToHQ.add(sendContent);
-				}
 				return;
 			}
 		}
 	return;
 }
 
-	
-	
+
+
 	// 本部へ報告する
 	private void sendDataToHQ() throws IOException, RuntimeException{
 		if (!this.sendContentToHQ.isEmpty()) {
@@ -378,17 +424,17 @@ public class Reception {
 		String sendContent = null;
 
 		Calendar testTime = Calendar.getInstance();
-		
+
 		ClientInfo clInfo = rcp.recpMonitor.demandClientInfo();
 
 		rcp.deliWaitFrgl = new Fragile(testTime, clInfo, rcp.calcFrglNum(testTime), DeliStats.delivering, ObsStats.none);
-		
+
 		sendContent = rcp.adjustInfo(Reception_HQ.makeFragile.toString());
-		
+
 		System.out.println(sendContent);
-		
+
 		boolean flag = false;
-		
+
    		// 中継所引き渡し結果を受け取る
 		while (!flag) {
 			flag = rcp.teleToHQ.sendSignal(sendContent, Receiver.hq, Receiver.reception, 10);
@@ -396,55 +442,4 @@ public class Reception {
 		}
 	}
 	*/
-	
-
-	/**
-	 *  コントロールメソッド
-	 *  受付所の一連の動作を行うメインメソッド
-	 *  荷物の依頼　→　収集ロボットに荷物を渡す　→　中継所引き渡し報告を受け取る　→　本部に報告　→　荷物の依頼　→　...	の順で繰り返す
-	 */
-	public static void main(String args[]) throws IllegalArgumentException, IOException, InterruptedException {
-		Reception rcp = new Reception();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-		Calendar deliWaitStart = Calendar.getInstance();		//収集ロボットに荷物を渡した時間を記録する変数
-		boolean waitFlag = true;	//deliWaitStartの更新をするかどうかを判定する変数
-        boolean deliWaitFlag = false;	
-        
-        while(true){
-        	
-            System.out.println("-------------------入力待ち中----------------------------------------");
-            
-			// 荷物の依頼を行う
-			rcp.requestFrgl(deliWaitFlag, reader);
-			
-            System.out.println("-------------------処理中-------------------------------------------");        	//以下はタイムアウトしてもしなくても動作する処理
-
-            // 荷物を渡す
-			if(rcp.sendFragile()){
-				if(waitFlag){
-					deliWaitStart = Calendar.getInstance();
-					deliWaitStart.add(Calendar.MINUTE, 5);	//荷物を渡した5分後に中継所引き渡し報告を受け取るを行う
-					waitFlag = false;
-				}
-			}
-    		
-    		// 中継所引き渡し結果を受け取る
-    		if(rcp.deliWaitFrgl != null){
-    			deliWaitFlag = deliWaitStart.before(Calendar.getInstance());
-    			if(deliWaitFlag){
-    				rcp.receivePassingResult();
-    				if(rcp.deliWaitFrgl == null){
-    					waitFlag = true;
-    					deliWaitFlag = false;
-    				}
-    			}
-    		}
-    		
-    		// 本部へ報告する
-    		rcp.sendDataToHQ();
-
-        		Thread.sleep(1000);     		
-        }//ここまでwhile
-	}//ここまでmain
-	
 }

@@ -1,38 +1,71 @@
 package relay;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import fragile.Fragile;
+import fragile.deliRecord.DeliStats;
+import fragile.deliRecord.ObsStats;
 
 public class FragileList {
-	LinkedList<Fragile> fragiles = new LinkedList<>();
+	ArrayList<Fragile> fragiles = new ArrayList<Fragile>();
 
 	void addFragile(Fragile fragile) {
 		fragiles.add(fragile);
 	}
 
-	Fragile getFragile() {
-		return fragiles.peek();
-	}
-
-	Fragile takeFragile() {
-		return fragiles.poll();
-	}
-
-	Fragile getFragile(Long num) {
+	@SuppressWarnings("null")
+	private int getIndex(Long num) {
+		int i = 0;
 		for (Iterator<Fragile> itr = fragiles.iterator(); itr.hasNext();) {
 			Fragile fragile = itr.next();
 			if (fragile.getFrglNum() == num) {
-				fragiles.remove(fragile);
-				return fragile;
+				return i;
 			}
+			i++;
 		}
-		return null;
+		return (Integer) null;
+	}
+	/*
+	 * Fragile getFragile(Long num) { for (Iterator<Fragile> itr =
+	 * fragiles.iterator(); itr.hasNext();) { Fragile fragile = itr.next(); if
+	 * (fragile.getFrglNum() == num) { return fragile; } } return null; }
+	 */
+
+	Fragile getFragile(Long num) {
+		try {
+			int i = getIndex(num);
+			return fragiles.get(i);
+		} catch (Exception e) {
+			System.err.println(e);
+			return null;
+		}
 	}
 
-	Fragile getFragile(String num) {
-		return this.getFragile(Long.parseLong(num));
+	ObsStats getObs(Long num) {
+		return getFragile(num).getObsStats();
+	}
+
+	void setStats(Long num, ObsStats oStats) {
+		int i = getIndex(num);
+		Fragile tmp = fragiles.get(i);
+		tmp.setObsStats(oStats);
+		fragiles.set(i, tmp);
+	}
+
+	void setStats(Long num, DeliStats dStats) {
+		int i = getIndex(num);
+		Fragile tmp = fragiles.get(i);
+		tmp.setDeliStats(dStats);
+		fragiles.set(i, tmp);
+	}
+
+	void setStats(Long num, DeliStats dStats, ObsStats obsStats) {
+		int i = getIndex(num);
+		Fragile tmp = fragiles.get(i);
+		tmp.setDeliStats(dStats);
+		tmp.setObsStats(obsStats);
+		fragiles.set(i, tmp);
 	}
 
 	Boolean isNotEmpty() {
@@ -42,13 +75,8 @@ public class FragileList {
 	// デバッグ用
 	void printFragile() {
 		for (Fragile fragile : fragiles) {
-			System.out.println(fragile.getFrglNum());
-			System.out.println(fragile.getStrTime("relayArriveTime"));
+			System.out.println("[" + fragile.getFrglNum() + "]");
 		}
-	}
-
-	int size() {
-		return fragiles.size();
 	}
 
 }

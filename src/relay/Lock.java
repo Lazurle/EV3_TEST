@@ -1,6 +1,6 @@
 package relay;
 
-public class ControlLock {
+public class Lock {
 	private Boolean lock = false;
 
 	Boolean getLock() {

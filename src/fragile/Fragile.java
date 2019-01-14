@@ -1,7 +1,10 @@
 package fragile;
 
 import java.util.Calendar;
-import fragile.deliRecord.*;
+
+import fragile.deliRecord.DeliRecord;
+import fragile.deliRecord.DeliStats;
+import fragile.deliRecord.ObsStats;
 
 public class Fragile {
 
@@ -10,8 +13,8 @@ public class Fragile {
 	private ClientInfo clientInfo = new ClientInfo(); //依頼情報
 
 	private DeliRecord deliRecord = new DeliRecord(); //配達記録
-	
-	
+
+
 	////////////////////////////////////コンストラクタ//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * @受付時間 not 負の値
@@ -20,7 +23,7 @@ public class Fragile {
 	 * @配達状況 not 存在しない配達状況
 	 * @障害状況 not 存在しない障害状況
 	 */
-	
+
 	/*受付所から呼ぶコンストラクタ
 	 * receptionTime:受付時間
 	 * clientInfo:依頼情報
@@ -37,28 +40,26 @@ public class Fragile {
 		}
 		this.setFrglNum(frglNum);
 		this.deliRecord.setDeliStats(deliStats);
-		this.deliRecord.setObsStats(obsStats);	
+		this.deliRecord.setObsStats(obsStats);
 	}
-	
+
 	/*中継所から呼ぶコンストラクタ
-	 * relayArraiveTime:中継所到着時間
 	 * clientInfo:依頼情報
 	 * frglNum:荷物番号
 	 * deliStats:配達状況
 	 * obsStats:障害状況
 	 */
-	public Fragile(String relayArriveTime, ClientInfo clientInfo, long frglNum, DeliStats deliStats, ObsStats obsStats) {
-		this.deliRecord.saveTime("relayArriveTime",relayArriveTime);
+	public Fragile(ClientInfo clientInfo, long frglNum, DeliStats deliStats, ObsStats obsStats) {
 		this.frglNum = frglNum;
 		this.clientInfo = clientInfo;
 		this.deliRecord.setDeliStats(deliStats);
 		this.deliRecord.setObsStats(obsStats);
 	}
-	
+
 	//受取人宅から呼ぶコンストラクタ
 	public Fragile(){
 	}
-	
+
 	/*本部から呼ぶコンストラクタ
 	 * frglNum:荷物番号
 	 * clientInfo:依頼人情報
@@ -71,7 +72,7 @@ public class Fragile {
 		this.saveTime("receptionTime",receptionTime);
 		this.saveTime("sendTime",sendTime);
 	}
-	 
+
 	////////////////////////////////////setter//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * @荷物番号 not 負の値や大きすぎる値
@@ -144,12 +145,12 @@ public class Fragile {
 	}
 
 	////////////////////////////////////getter//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	//荷物番号を返す
 	public long getFrglNum() {
 		return this.frglNum;
 	}
-		
+
 	//配達状況を取得する
 	public DeliStats getDeliStats() {
 		return this.deliRecord.getDeliStats();
@@ -177,14 +178,14 @@ public class Fragile {
 	public ObsStats getObsStats() {
 		return this.deliRecord.getObsStats();
 	}
-	
+
 	/*配達時間をカレンダー型で取得する
 	 * getTime:取得したい時間のフィールド名
 	 */
 	public Calendar getCalTime(String getTime){
 		return this.deliRecord.getCalTime(getTime);
 	}
-	
+
 	public String getStrTime(String getTime){
 		return this.deliRecord.getStrTime(getTime);
 	}

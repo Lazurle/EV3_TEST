@@ -1,5 +1,10 @@
 package hq;
 
+/**
+ * 加工命令:Enum
+ * @author 秋山和哉
+ *
+ */
 
 	enum Adjustment {//Enum : 加工命令
 		sendObs,//障害状況の送信命令

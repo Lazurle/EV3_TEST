@@ -6,15 +6,26 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Calendar;
 
+/**
+ * 配達情報を参照するThread
+ * @author 秋山和哉
+ *
+ */
+
+
 public class ShowDeliRecordThread extends Thread {
 	BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 	HQMonitor HQmonitor = new HQMonitor();
 	HQ hq = new HQ();
+	@Override
 	public void run() {
 		while(true) {
 			showDeliRecord();
 		}
 	}
+	/**
+	 * 配達情報を表示する
+	 */
 	private void showDeliRecord() {
 		Boolean verify_Boolean;
 		try {

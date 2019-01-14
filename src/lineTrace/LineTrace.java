@@ -10,8 +10,10 @@ import lejos.utility.Delay;
 
 public class LineTrace {
 	private final static double wheelR = 28; //タイヤ半径:28mm
+	/*
 	private EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.A); //左タイヤ
 	private EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.D); //右タイヤ
+	*/
 	private EV3ColorSensor cSensor = new EV3ColorSensor(SensorPort.S4); //カラーセンサー
 	private EV3GyroSensor gSensor = new EV3GyroSensor(SensorPort.S1); //ジャイロセンサー
 	private SensorMode light = cSensor.getRedMode(); //カラーセンサーのモード
@@ -21,8 +23,6 @@ public class LineTrace {
 	private PidControl pid = new PidControl(); //pidコントロールのクラス 左モーター用
 
 	public LineTrace(){
-		leftMotor.setAcceleration(6000);
-		rightMotor.setAcceleration(6000);
 		resetPid();
 	}
 	/*搬送路に沿って一定距離ライントレースする
@@ -36,11 +36,13 @@ public class LineTrace {
 	public void distLineTrace(double targetDis,float borderLeft,float borderRight,float Kp,float Ki,float Kd){
 		double moveDis = 0;
 		double motorPos = 0;
+		EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.A); //左タイヤ
+		EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.D); //右タイヤ
 		while(moveDis < targetDis){
 			motorPos = leftMotor.getPosition();
 			light.fetchSample(cSample, 0);
-			this.leftMotor.setSpeed((int)pid.pid_sample(cSample[0],borderLeft,Kp,Ki,Kd));
-			this.rightMotor.setSpeed((int)pid.pid_sample(cSample[0],borderRight,Kp,Ki,Kd));
+			leftMotor.setSpeed((int)pid.pid_sample(cSample[0],borderLeft,Kp,Ki,Kd));
+			rightMotor.setSpeed((int)pid.pid_sample(cSample[0],borderRight,Kp,Ki,Kd));
 			if(borderLeft > borderRight){
 				leftMotor.forward();
 				rightMotor.forward();
@@ -50,7 +52,11 @@ public class LineTrace {
 			}
 			moveDis += calcDis(leftMotor.getPosition() - motorPos);
 		}
-		this.stopMotor();
+		//this.stopMotor();
+		this.stopMotor(leftMotor,rightMotor);
+		Delay.msDelay(500);
+		leftMotor.close();
+		rightMotor.close();
 		Delay.msDelay(500);
 	}
 	
@@ -61,6 +67,8 @@ public class LineTrace {
 	public void distStraight(int speed,double targetDis){
 		double moveDis = 0;
 		double motorPos = 0;
+		EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.A); //左タイヤ
+		EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.D); //右タイヤ
 		while(moveDis < targetDis){
 			motorPos = leftMotor.getPosition();
 			leftMotor.setSpeed(speed);
@@ -69,11 +77,21 @@ public class LineTrace {
 			rightMotor.forward();
 			moveDis += calcDis(leftMotor.getPosition() - motorPos);
 		}
+		//this.stopMotor();
+		this.stopMotor(leftMotor,rightMotor);
+		Delay.msDelay(500);
+		leftMotor.close();
+		rightMotor.close();
+		this.resetPid();
+	}
+	/*
+	public void stopMotor(){
 		leftMotor.stop(true);
 		rightMotor.stop();
 	}
+	*/
 	
-	public void stopMotor(){
+	public void stopMotor(EV3LargeRegulatedMotor leftMotor,EV3LargeRegulatedMotor rightMotor){
 		leftMotor.stop(true);
 		rightMotor.stop();
 	}
@@ -81,11 +99,16 @@ public class LineTrace {
 	  　正:左回り 負:右回り
 	 */
 	public void rotateDeg(int deg){
+		EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.A); //左タイヤ
+		EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.D); //右タイヤ
 		leftMotor.setSpeed(100);
 		rightMotor.setSpeed(100);
 		leftMotor.rotate(-deg,true);
 		rightMotor.rotate(deg);
 		Delay.msDelay(500);
+		leftMotor.close();
+		rightMotor.close();
+		this.resetPid();
 	}
 	
 	//pidの変数をリセットする
@@ -99,6 +122,9 @@ public class LineTrace {
 	  deg:回転する角度(正:左回り,負:右回り)
 	*/
 	public float getRoadColor(int deg){
+		EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.A); //左タイヤ
+		EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.D); //右タイヤ
+		Delay.msDelay(100);
 		leftMotor.setSpeed(100);
 		rightMotor.setSpeed(100);
 		leftMotor.rotate(-deg,true);
@@ -107,6 +133,8 @@ public class LineTrace {
 		leftMotor.rotate(deg,true);
 		rightMotor.rotate(-deg);
 		Delay.msDelay(500);
+		leftMotor.close();
+		rightMotor.close();
 		return cSample[0];
 	}
 	
@@ -123,8 +151,6 @@ public class LineTrace {
 	
 	//Close処理
 	public void close(){
-		this.leftMotor.close();
-		this.rightMotor.close();
 		this.cSensor.close();
 		this.gSensor.close();
 	}

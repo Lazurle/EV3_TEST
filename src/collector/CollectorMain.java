@@ -7,7 +7,8 @@ public class CollectorMain {
 		Collector collector = new Collector();
 
 		// 実行
-		// collector.executeMain();
-		collector.executeMainWithoutLineTrace();
+		collector.executeMain();
+		// collector.executeMainWithoutLineTrace();
+		// collector.reportDeli();
 	}
 }

@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
-import java.util.concurrent.Callable;
 
 import fragile.ClientInfo;
 import fragile.Fragile;
@@ -15,6 +14,11 @@ import fragile.deliRecord.ObsStats;
 import telecommunication.Receiver;
 import telecommunication.Telecommunication;
 import telecommunication.ThreadState;
+
+/**
+ * 本部クラス
+ * @author 秋山和哉
+ */
 
 public class HQ {
 	HQMonitor HQmonitor = new HQMonitor();
@@ -25,9 +29,11 @@ public class HQ {
 	//importはあくまで長ったらしくかかなくて済むための
 	ThreadState state = ThreadState.Death;//現在通信中の相手の状態(中継所)受信」
 	ThreadState state1 = ThreadState.Death;//送信
-	//コントロールメソッド
-	//◆未完
 
+	/**
+	 * コントロールメソッド（配達情報を参照できるThreadを稼働させて、中継所、受付所に対して交互に受信を行う）
+	 *
+	 */
 	public void executeMain() {
 		//Threadのインスタンス作成
 		ShowDeliRecordThread showDeliThread = new ShowDeliRecordThread();
@@ -84,11 +90,13 @@ public class HQ {
 		}
 	}
 
-	//(◆インスタンス)中継所と本部の通信で使う「（共有クラス）通信」
+	//(インスタンス)中継所と本部の通信で使う「（共有クラス）通信」
 	private Telecommunication boundaryRelay = new Telecommunication();
 
-	//EV3
-	//(受信) 中継所から本部が情報を受信するメソッド
+	/**
+	 * (受信) 中継所から本部が情報を受信するメソッド
+	 * @return 文字列の受信情報
+	 */
 	private String telecommunicationReceiveFromRelay() {
 		state = this.boundaryRelay.getThreadState_onlyOnce();
 		if (state != ThreadState.Death) {
@@ -123,7 +131,11 @@ public class HQ {
 		return "";
 	}
 
-	//(送信) 本部が中継所に情報を送信するメソッド(IOExceptionが起きる)
+	/**
+	 *(送信) 本部が中継所に情報を送信するメソッド(IOExceptionが起きる)
+	 * @param SendDetail:送りたい文字列の情報
+	 * @return true:送信成功, false:送信失敗
+	 */
 	private Boolean telecommunicationSendToRelay(String SendDetail) {
 		state1 = this.boundaryRelay.getThreadState_onlyOnce();//裏でIOEが動いてて、
 		//今スレッドの状態がどうなのか、Runなのかとかを返してくれる
@@ -157,10 +169,13 @@ public class HQ {
 		return false;
 	}
 
-	//(◆インスタンス)受付所と本部の通信で使う「（共有クラス）通信」
+	//(インスタンス)受付所と本部の通信で使う「（共有クラス）通信」
 	private Telecommunication boundaryRecept = new Telecommunication();
 
-	//(受信) 受付所から本部が情報を受信する通信メソッド
+	/**
+	 * (受信) 受付所から本部が情報を受信する通信メソッド
+	 * @return 文字列の受信した情報
+	 */
 	private String telecommunicationReceiveFromReception() {
 		String tmp;//もらう情報
 		try {
@@ -178,7 +193,11 @@ public class HQ {
 		}
 	}
 
-	//(送信) 本部から受付所に情報を送信するメソッド
+	/**
+	 * (送信) 本部から受付所に情報を送信するメソッド
+	 * @param SendDetail:送りたい文字列の情報
+	 * @return true:送信成功, false:送信失敗
+	 */
 	private Boolean telecomunicationSendToReception(String SendDetail) {
 		while (true) {
 			try {
@@ -196,10 +215,14 @@ public class HQ {
 		}
 	}
 
-	//(◆インスタンス)本部と受取人宅（PC）とも通信で使う「（共有クラス）通信」
+	//(インスタンス)本部と受取人宅（PC）とも通信で使う「（共有クラス）通信」
 	private Telecommunication boundaryHouse = new Telecommunication();
 
-	//(送信)本部が受取人宅に情報を送信するメソッド
+	/**
+	 *(送信)本部が受取人宅に情報を送信するメソッド
+	 * @param SendDetail:送信する文字列
+	 * @return true:送信成功, false:送信失敗
+	 */
 	private Boolean telecommunicationSendToHouse(String SendDetail) {
 		while (true) {
 			try {
@@ -217,17 +240,20 @@ public class HQ {
 		}
 	}
 
-	// メソッド：受信したStringから命令を識別する（情報：String）（クラス図にないので作成)
-	//◆◆完成
+	/**受信したStringから命令を識別する（情報：String）（クラス図にないので作成)
+	 *
+	 * @param 受信した文字列の情報
+	 */
 	public void determineOrder(String receive) {
 		//命令を識別する、文字列を分割する。
 		//2番目の引数が負なので分割回数は制限なし。
 		String[] OrderMessage = receive.split("\\|", -1);
 
 		// 1. 命令：障害状況の参照、該当ユースケース：配達記録を送信する。(中継所ー本部)
-		if (OrderMessage[0].equals("getObs")) {
-			sendDeliRecord(receive);
-		} /*else if (OrderMessage[0].equals("collePassPoint")) {
+		//if (OrderMessage[0].equals("getObs")) {
+		//	sendDeliRecord(receive);
+		//}
+	/*else if (OrderMessage[0].equals("collePassPoint")) {
 			//● 中継から収集ロボットが衝突回避地点を抜けた報告を本部が受けたらそれを本部が受付所に伝える"
 			//受付所にコネクションを要求して、collePassPointを送信する。
 			Boolean TelecomResult_Boolean = telecommunicationSendToRelay(OrderMessage[0]);
@@ -269,7 +295,7 @@ public class HQ {
 					}
 				} //ここまでwhile
 			} //ここまでelse
-			}*/ else {
+			}*/ //else {
 			// 2. 命令：荷物の作成命令, 該当ユースケース：配達記録を更新する。（受付所ー本部）
 			// 3. 命令：中継所到着時間の更新命令, 該当ユースケース：配達記録を更新する。（中継所ー本部）
 			// 4. 命令：中継所引き渡し失敗へ更新命令, 該当ユースケース：配達記録を更新する。（受付所ー本部）
@@ -279,24 +305,24 @@ public class HQ {
 			// 8. 命令：配達完了, 該当ユースケース：配達記録を更新する。（中継所ー本部）
 			setDeliRecord(receive);
 		}
-	}
 
-	//- 配達記録を送信する(情報 : String) : void
-	//中継所から障害状況を参照されたときに行うメソッド。
-	//◆◆とりあえず形だけ完成
+
+	/**- 配達記録を送信する(情報 : String) : void
+	 * 中継所から障害状況を参照されたときに行うメソッド
+	 * @param info:受信した情報の文字列
+	 */
 	private void sendDeliRecord(String info) {
-		//引数infoは、受け取った加工された情報、文字列である。
-		//具体例：「障害状況の参照 | 201811191720」
+		//info具体例：「障害状況の参照 | 201811191720」
 		String[] OrderMessage = info.split("\\|", -1);
 		long frglNum = Integer.parseInt(OrderMessage[1]);
 		//荷物を検索する
 		int junban = searchFragile(frglNum);
 		//障害状況を参照する
-		fragile.deliRecord.ObsStats enum_Obs = fragileFile.get(junban).getObsStats();//junban番目のリストの障害状況を参照している。
+		//fragile.deliRecord.ObsStats enum_Obs = fragileFile.get(junban).getObsStats();//junban番目のリストの障害状況を参照している。
 		Boolean TelecomResult_Boolean;
 		String SendDetail_String;
-		switch (enum_Obs) {
-		case none://障害無し
+		//switch (enum_Obs) {
+		//case none://障害無し
 			//中継所にコネクションを要求して、「依頼人、受取人情報と障害状況を送信する処理
 			SendDetail_String = adjust(Adjustment.obsClientInfo, junban);//加工命令：依頼,受取,障害
 			TelecomResult_Boolean = telecommunicationSendToRelay(SendDetail_String);//中継所と通信し、成功したか判定するやつ。
@@ -320,8 +346,8 @@ public class HQ {
 				} //ここまでwhile
 
 			} //ここまでelse
-			break;
-		default://受取人不在
+			//break;
+		/*default://受取人不在
 			//中継所にコネクションを要求して障害状況（「受取人不在」）のみを送信する処理
 			//中継所に送信する情報を加工する。
 			SendDetail_String = adjust(Adjustment.sendObs, frglNum);//加工命令：障害状況（受取人不在）の送信
@@ -347,16 +373,17 @@ public class HQ {
 				} //ここまでwhile
 			}
 			return;
-		}
+		}*/
 	}
 
-	//- 配達記録を更新する(情報 : String) : void
-	//情報を加工して記録するsaveメソッドを呼び出す
-	//◆◆完成
+	/**- 配達記録を更新する(情報 : String) : void
+	 * 情報を加工して記録するsaveメソッドを呼び出す
+	 * @param info:受信した文字列の情報
+	 */
 	private void setDeliRecord(String info) {
 		//文字列を分割する。2番目の引数が負なので分割回数は制限なし。
 		String[] OrderMessage = info.split("\\|", -1);
-		//先頭のEnumで識別
+		//先頭のEnumで命令を識別
 		//まず受付所の処理をする。
 		//判定に使うEnum変数
 		//makeFragileならこのif文を実行
@@ -387,8 +414,13 @@ public class HQ {
 		}
 	}
 
-	//- 情報を加工する(命令 : 加工命令) : void, 中継所に情報を送信するときに加工が必要でその時に使う
-	//◆◆完成
+
+	/**
+	 * 情報を加工する(命令 : 加工命令) 中継所に情報を送信するときに加工が必要でその時に使う
+	 * @param order_enum:Adjustment(Enum)に入っている加工命令
+	 * @param frglNum:荷物番号
+	 * @return 加工された文字列
+	 */
 	private String adjust(Adjustment order_enum, long frglNum) {
 		int junban = searchFragile(frglNum);
 		String AdjustReturnData;
@@ -398,8 +430,8 @@ public class HQ {
 			String ClientInfo[] = fragileFile.get(junban).getClientInfo();
 			//受取人情報を取得する
 			String HouseInfo[] = fragileFile.get(junban).getHouseInfo();
-			AdjustReturnData = ClientInfo[0] + "|" + ClientInfo[1] + "|" + ClientInfo[2] + "|" + HouseInfo[0] + "|"
-					+ HouseInfo[1] + "|" + HouseInfo[2] + "|none";
+			AdjustReturnData = "syncObs"+ "|" + ClientInfo[0] + "|" + ClientInfo[1] + "|" + ClientInfo[2] + "|" + HouseInfo[0] + "|"
+					+ HouseInfo[1] + "|" + HouseInfo[2];
 			return AdjustReturnData;
 
 		case sendObs://中継所への障害状況の送信するための加工。
@@ -409,8 +441,11 @@ public class HQ {
 		return null;
 	}
 
-	//- 情報を加工して記録する(受信内容 : String, 加工内容 : 加工保存命令) : void
-	//◆◆ほぼ完成、中継所と受付所とフォーマットの確認
+	/**
+	 * - 情報を加工して記録する(受信内容 : String, 加工内容 : 加工保存命令) : void
+	 * @param info:受信した文字列
+	 * @param saveOrder_enum:加工保存命令のEnum
+	 */
 	private void save(String info, Save saveOrder_enum) {
 		//MはMessage,受け取ったStringを配列に分割した値を持つフィールド
 		String[] M = info.split("\\|", -1);
@@ -472,6 +507,7 @@ public class HQ {
 			fragileFile.get(junban).saveTime("relayArriveTime", relayArriveTime_String);
 			fragileFile.get(junban).setObsStats(ObsStats.none);
 			fragileFile.get(junban).setDeliStats(DeliStats.awaiting);//戻ってきたから配達待ちに更新
+			sendDeliRecord(info);
 			break;
 		case startDeli://(中継所)配達開始時間の更新命令
 			//受信情報：「配達開始時間の更新命令 | 201811191720 | 2016,1,30, 12, 0, 0」
@@ -515,7 +551,10 @@ public class HQ {
 		}
 	}
 
-	//現在時刻を取得し、「201912301200」のような形で返す
+	/**
+	 * 現在時刻を取得し、「201912301200」のような形で返すメソッド
+	 * @return 現在時刻をStringでMINUTEまでつなげたものを返す
+	 */
 	public String getCurrentTime() {
 		Calendar cal = Calendar.getInstance();//現在時刻の取得
 		String time_Str;
@@ -526,6 +565,12 @@ public class HQ {
 				String.valueOf(cal.get(Calendar.MINUTE));
 		return time_Str;
 	}
+
+	/**
+	 * 配達完了時刻に受け取った分のint型で分を引いて受取時間を出す
+	 * @param minute:配達開始から受取完了するまでにかかった時間（分）
+	 * @return 受取完了時刻のString（「201912301200」なフォーマットで返ってくる）
+	 */
 	public String getReceiveTime_String(int minute) {
 		Calendar cal = Calendar.getInstance();
 		String time_Str;
@@ -606,10 +651,11 @@ public class HQ {
 	}
 	*/
 
-	//
-	//- 荷物番号をもとに該当する荷物を荷物台帳から検索する(荷物番号 : Integer) : 荷物
-	//荷物番号をlongで入れるとArrayListの何番目か返してくれる。
-	//◆◆完成
+	/**
+	 * - 荷物番号をもとに該当する荷物を荷物台帳から検索する(荷物番号 : long) : 荷物
+	 * @param frglNum:荷物番号
+	 * @return 該当する荷物が入っているArrayListの場所、順番を返す。
+	 */
 	public Integer searchFragile(long frglNum) {
 		int junban;
 		Iterator iterator = fragileFile.iterator();

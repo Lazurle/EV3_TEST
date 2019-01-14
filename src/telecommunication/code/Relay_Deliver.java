@@ -5,5 +5,5 @@ package telecommunication.code;
  * @author 三森
  */
 public enum Relay_Deliver {
-	sendLock,syncLock,sendHasFrgl,syncHasFrgl,syncFrglInfo,setLockFalse,reportDeliResult,reportDeliFail,protocol, backWaitingArea, goHouse,
+	sendLock,syncLock,sendHasFrgl,syncHasFrgl,syncFrglInfo,setLockFalse,reportDeliResult,reportDeliFail,protocol,noFrgl
 }

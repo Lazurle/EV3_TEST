@@ -1,5 +1,6 @@
 package relay;
 
+import fragile.Fragile;
 import fragile.deliRecord.ObsStats;
 import telecommunication.Receiver;
 import telecommunication.code.Collector_Relay;
@@ -8,29 +9,67 @@ import telecommunication.code.Relay_HQ;
 
 public class Relay {
 	ControlOrder co = new ControlOrder(this);
-	ControlInfo ci = new ControlInfo();
+	InfoEditor iEditor = new InfoEditor();
 	ControlFragile cf = new ControlFragile();
 	ControlTele ct = new ControlTele();
-	ControlLock cl = new ControlLock();
+	Lock lock = new Lock();
+	LockTimer lTimerColle = new LockTimer(false, 120);
+	LockTimer lTimerDeli = new LockTimer(true);
+	LockTimer lTimerHQ = new LockTimer(true);
+
+	private Boolean judgeTele(Receiver receiver) {
+		if (receiver == Receiver.collector)
+			return judgeTeleColle();
+		else if (receiver == Receiver.deliver)
+			return judgeTeleDeli();
+		else if (receiver == Receiver.hq)
+			return judgeTeleHQ();
+		else
+			return false;
+	}
+
+	private Boolean judgeTeleColle() {
+		return lTimerColle.getLock();
+	}
+
+	private Boolean judgeTeleDeli() {
+		return lTimerDeli.getLock();
+	}
+
+	private Boolean judgeTeleHQ() {
+		return lTimerHQ.getLock();
+	}
+
+	private void setLock(Receiver receiver, Boolean b) {
+		if (receiver == Receiver.collector)
+			lTimerColle.setLock(b);
+		else if (receiver == Receiver.deliver)
+			lTimerDeli.setLock(b);
+		else if (receiver == Receiver.hq)
+			lTimerHQ.setLock(b);
+	}
 
 	void execute() {
 		while (true) {
-			cl.printLock();
 			wait(Receiver.deliver);
-			cl.printLock();
+			scanFragileList();
 			wait(Receiver.collector);
 			scanFragileList();
 		}
 	}
 
 	private void wait(Receiver receiver) {
-		String receDetail = receive(receiver);
-		if (receDetail == null)
+		if (!judgeTele(receiver))
 			return;
-		co.idtOrder(receiver, receDetail);
+		System.out.println("[W:" + receiver + "]");
+		String receDetail = receive(receiver);
+		if (!receDetail.equals(""))
+			co.idtOrder(receiver, receDetail);
 	}
 
 	private Boolean send(Receiver receiver, String sendDetail) {
+		if (!judgeTele(receiver))
+			return false;
 		return ct.send(receiver, sendDetail);
 		// return ct.send(receiver, sendDetail, "debug");
 	}
@@ -40,117 +79,122 @@ public class Relay {
 		// return ct.receive(receiver, "debug");
 	}
 
-	// 本部へのタスクがあるかどうかを調べる
-	void scanFragileList() {
+	private void scanFragileList() {
 		cf.printList();
-		sendRelayArrive(cf.getDemandReport());
-		sendDemandObs(cf.getDemandObs());
+		sendArrive(cf.getNum());
+		if (cf.hasNeedInfo())
+			wait(Receiver.hq);
 		sendStart(cf.getOnDeliver());
 		cf.distribute();
-		sendAbsent(cf.getAbsent());
-		sendWrongHouse(cf.getWrong());
-		sendComplete(cf.getCompleted());
+		sendReturned(cf.getReturned());
 	}
 
-	private void sendRelayArrive(Long num) {
+	private void sendArrive(Long num) {
 		if (num == null)
 			return;
-		String sendDetail = Relay_HQ.setRelayArrive + "|" + num;
-		if (send(Receiver.hq, sendDetail))
-			cf.saveArriveReported(num);
-		;
-	}
-
-	private void sendDemandObs(Long num) {
-		if (num == null)
-			return;
-		String sendDetail = Relay_HQ.getObs + "|" + num;
-		if (send(Receiver.hq, sendDetail))
+		String sendDetail = iEditor.adjustInfo(Relay_HQ.setRelayArrive, num);
+		if (send(Receiver.hq, sendDetail)) {
+			cf.setNeedInfo(num);
 			wait(Receiver.hq);
+		}
 	}
 
 	private void sendStart(Long num) {
 		if (num == null)
 			return;
-		String sendDetail = Relay_HQ.setStartDeli + "|" + num;
+		String sendDetail = iEditor.adjustInfo(Relay_HQ.setStartDeli, num);
 		if (send(Receiver.hq, sendDetail))
 			cf.setReportedPassing(num);
+	}
+
+	void sendReturned(Long num) {
+		if (num == null)
+			return;
+		ObsStats oStats = cf.getObs(num);
+		if (oStats == ObsStats.absent) {
+			sendAbsent(num);
+		} else if (oStats == ObsStats.wrongHouse) {
+			sendWrongHouse(num);
+		} else {
+			sendComplete(num);
+		}
 	}
 
 	private void sendAbsent(Long num) {
 		if (num == null)
 			return;
-		String sendDetail = Relay_HQ.setAbsent + "|" + num;
+		String sendDetail = iEditor.adjustInfo(Relay_HQ.setAbsent, num);
 		if (send(Receiver.hq, sendDetail))
-			cf.reDemandObs(num);
+			cf.reWaiting(num);
 	}
 
 	private void sendWrongHouse(Long num) {
 		if (num == null)
 			return;
-		String sendDetail = Relay_HQ.setWrgHouse + "|" + num;
+		String sendDetail = iEditor.adjustInfo(Relay_HQ.setWrgHouse, num);
 		if (send(Receiver.hq, sendDetail))
-			cf.setReportedWrong(num);
+			cf.setReported(num);
 	}
 
 	private void sendComplete(Long num) {
 		if (num == null)
 			return;
-		String sendDetail = Relay_HQ.reportDeliComp.toString();
-		sendDetail += "|" + num;
-		sendDetail += "|" + cf.getFragileTime(num);
+		String sendDetail = iEditor.adjustInfo(Relay_HQ.reportDeliComp, num, cf.getDeliTime(num));
 		if (send(Receiver.hq, sendDetail))
-			cf.deleteCompleted();
+			cf.setReported(num);
 	}
 
-	void saveFragileNum(String[] msg) {
-		Long num = Long.parseLong(msg[1]);
+	void saveFragileNum(String numStr) {
+		Long num = Long.parseLong(numStr);
 		cf.saveFragileNum(num);
 	}
 
-	// getObs|200012241224|clientman|09064758475284632|2-2|houseman|090244867442749563|1-3
-	void saveFrglInfo(String[] msg) {
-		cf.saveFragileInfo(msg[1], msg[2], msg[4], msg[5], msg[7]);
+	void saveFrglInfo(String numStr, String cname, String caddr, String hname, String haddr) {
+		Long num = Long.parseLong(numStr);
+		cf.saveFragileInfo(num, cname, caddr, hname, haddr);
 	}
 
-	void syncLock(Receiver receiver) {
-		String sendDetail = Collector_Relay.syncLock + "|" + cl.getLock();
+	void sendLock(Receiver receiver) {
+		String sendDetail = Collector_Relay.syncLock + "|" + lock.getLock();
 		if (send(receiver, sendDetail))
-			if (!cl.getLock())
-				cl.setLock(true);
+			if (!lock.getLock())
+				lock.setLock(true);
 	}
 
-	void sendHasFrgl() {
-		String sendDetail = Relay_Deliver.syncHasFrgl + "|" + cf.hasDeliverableFragile();
-		if (send(Receiver.deliver, sendDetail))
-			if (cf.hasDeliverableFragile())
-				cf.setWaitingPassing();
+	void prepareFrgl() {
+		if (cf.hasDeliverableFragile()) {
+			sendFragile();
+		} else {
+			sendNoFrgl();
+		}
+	}
+
+	private void sendNoFrgl() {
+		String sendDetail = Relay_Deliver.noFrgl.toString();
+		send(Receiver.deliver, sendDetail);
 	}
 
 	void sendFragile() {
-		String sendDetail = Relay_Deliver.syncFrglInfo + "|";
-		sendDetail += ci.adjustInfo(cf.getWaitingPassing());
+		Fragile tmp = cf.getDeliverableFragile();
+		String sendDetail = iEditor.adjustInfo(tmp);
 		if (send(Receiver.deliver, sendDetail))
-			cf.setOnDeliver();
+			cf.setOnDeliver(tmp.getFrglNum());
 	}
 
-	// msg[]="reportDeliFail|200012241224|absent"
-	void saveDeliFail(String[] msg) {
-		Long num = Long.parseLong(msg[1]);
-		ObsStats oStats = ObsStats.valueOf(msg[2]);
+	void saveDeliFail(String numStr, String oStatsStr) {
+		Long num = Long.parseLong(numStr);
+		ObsStats oStats = ObsStats.valueOf(oStatsStr);
 		cf.setFailed(num, oStats);
 	}
 
-	// msg[]="reportDeliResult|200012241224|5"
-	void saveDeliComp(String[] msg) {
-		Long num = Long.parseLong(msg[1]);
-		Integer time = Integer.parseInt(msg[2]);
+	void saveDeliComp(String numStr, String timeStr) {
+		Long num = Long.parseLong(numStr);
+		Integer time = Integer.parseInt(timeStr);
 		cf.setCompleted(num, time);
 	}
 
-	// msg[]="protocol|relay"
-	void judgeProtocol(Receiver receiver, String[] msg) {
-		if (msg[1].equals("relay")) {
+	void judgeProtocol(Receiver receiver, String msg) {
+		if (msg.equals("relay")) {
 			sendCorrectConnection(receiver);
 		} else {
 			sendWrongConnection(receiver);
@@ -158,8 +202,10 @@ public class Relay {
 	}
 
 	private void sendCorrectConnection(Receiver receiver) {
-		if (send(receiver, "protocol|true"))
-			ct.receive(receiver, "debug");
+		if (send(receiver, "protocol|true")) {
+			setLock(receiver, true);
+			wait(receiver);
+		}
 	}
 
 	private void sendWrongConnection(Receiver receiver) {

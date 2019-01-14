@@ -1,5 +1,4 @@
 package lineTrace;
-
 import lejos.utility.Delay;
 
 /*
@@ -26,7 +25,7 @@ public class LineTrace_Col {
 			color = lt.getRoadColor(15);
 		}
 		//最初の灰色へ到達
-
+		Delay.msDelay(100);
 		lt.resetPid();
 		lt.distLineTrace(1200, inTargetVal, outTargetVal, 160f, 200f, 1f);
 		color = lt.getRoadColor(15);
@@ -46,6 +45,7 @@ public class LineTrace_Col {
 			lt.rotateDeg(-40);
 			color = lt.getRoadColor(-15);
 		}
+		Delay.msDelay(100);
 		lt.resetPid();
 
 		lt.distLineTrace(350, outTargetVal, inTargetVal, 200f, 200f, 0.7f);
@@ -67,6 +67,7 @@ public class LineTrace_Col {
 			lt.rotateDeg(10);
 			color = lt.getRoadColor(15);
 		}
+		Delay.msDelay(100);
 		lt.resetPid();
 		lt.distLineTrace(650, inTargetVal, outTargetVal, 200f, 200f, 0.7f);
 		//衝突回避地点から脱出
@@ -76,18 +77,21 @@ public class LineTrace_Col {
 	public void ToRecep(){
 		float color;
 		lt.getRoadColor(10);
-		lt.resetPid();
-		lt.distLineTrace(3950,inTargetVal, outTargetVal,200f,220f,0.8f);
-		lt.stopMotor();
 		Delay.msDelay(100);
-		//lt.rotateDeg(10);
+		lt.resetPid();
+		lt.distLineTrace(3850,inTargetVal, outTargetVal,240f,220f,0.9f);
+		//lt.stopMotor();
+		Delay.msDelay(100);
+		lt.rotateDeg(10);
 		color = lt.getRoadColor(15);
+		Delay.msDelay(100);
 		lt.resetPid();
 		while(!(color <= 0.4 && color >= 0.1)){
 			lt.distLineTrace(50, inTargetVal, outTargetVal, 180f,200f,0.6f);
 			//lt.resetPid();
 			color = lt.getRoadColor(15);
 		}
+		Delay.msDelay(100);
 		lt.resetPid();
 		lt.distLineTrace(110,inTargetVal, outTargetVal,180f,200f,0.6f);
 		lt.rotateDeg(170);

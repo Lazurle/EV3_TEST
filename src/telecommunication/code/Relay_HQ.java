@@ -5,5 +5,5 @@ package telecommunication.code;
  * @author 三森
  */
 public enum Relay_HQ {
-	getObs,setRelayArrive,setFailedPassing,setStartDeli,setWrgHouse,setAbsent,reportDeliComp
+	getObs,syncObs,setRelayArrive,setFailedPassing,setStartDeli,setWrgHouse,setAbsent,reportDeliComp
 }

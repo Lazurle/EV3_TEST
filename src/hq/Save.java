@@ -1,4 +1,9 @@
 package hq;
+/**
+ * 保存命令:Enum
+ * @author 秋山和哉
+ *
+ */
 
 	enum Save{//加工保存命令
 		//saveOdrNum,//命令番号を加工して記録命令

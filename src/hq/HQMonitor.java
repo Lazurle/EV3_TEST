@@ -9,9 +9,20 @@ import fragile.Fragile;
 import fragile.*;
 import fragile.deliRecord.*;
 
+/**
+ * 配達情報を参照する
+ * @author 秋山和哉
+ *
+ */
+
 public class HQMonitor {
 	BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
+	/**
+	 * エンターが押されたらまた入力を受け付けるメソッド
+	 * @return 入力された文字列を返す
+	 * @throws IOException:BufferedReaderのreadLineメソッドの例外
+	 */
 	public String reader_ver2() throws IOException {
 		String message = reader.readLine();
 		while (message.equals("")) {
@@ -20,21 +31,37 @@ public class HQMonitor {
 		return message;
 	}
 
-	private long frglNum;
-	private long frglTelNum;
+	private long frglNum;//荷物番号を一時的に格納する変数
+	private long frglTelNum;//依頼人の電話番号を一時的に格納する変数
 
+	/**
+	 * 荷物番号のゲッター
+	 * @return 荷物番号
+	 */
 	public long getfrglNum() {
 		return frglNum;
 	}
 
+	/**
+	 * 依頼人電話番号のゲッター
+	 * @return 依頼人電話番号
+	 */
 	public long getfrglTelNum() {
 		return frglTelNum;
 	}
 
+	/**荷物番号のセッター
+	 *
+	 * @param num:荷物番号
+	 */
 	public void setfrglNum(long num) {
 		frglNum = num;
 	}
 
+	/**
+	 * 依頼人電話番号のセッター
+	 * @param num:依頼人電話番号
+	 */
 	public void setfrglTelNum(long num) {
 		frglTelNum = num;
 	}
@@ -55,6 +82,11 @@ public class HQMonitor {
 		// + 荷物番号、電話番号の要求を表示する() : void
 		public void displayFrglTelNum() {
 		}*/
+
+	/**
+	 *  + 荷物番号、電話番号の要求を表示する() : void
+	 * @return true:認証成功, false:認証失敗
+	 */
 	public boolean verifyClient() {
 		try {
 			System.out.printf("荷物番号を入力してください。 => ");
@@ -81,7 +113,10 @@ public class HQMonitor {
 		return false;
 	}
 
-	// + 配達記録を表示する() : void
+	/**
+	 *  + 配達記録を表示する() : void
+	 * @param junban:表示したいArrayListの場所の配達情報を表示する
+	 */
 	public void displayDeliInfo(int junban) {//これはたぶん依頼者が参照した場合、該当する荷物番号の配達記録を表示する。
 		String ReceptionTime, SendTime, RelayArriveTime, DeliStartTime, ReceiveTime, DeliFinishTime;
 		ReceptionTime = HQ.fragileFile.get(junban).getStrTime("receptionTime");
@@ -114,7 +149,10 @@ public class HQMonitor {
 		System.out.println("障害状況：" + HQ.fragileFile.get(junban).getObsStats());
 	}
 
-	// + 配達記録の一覧を表示する() : void
+
+	/**
+	 * + 配達記録の一覧を表示する() : void
+	 */
 	public void displayDeliIndex() {//これはたぶんシステム管理者が参照した場合、すべての配達記録を表示する。
 		System.out.println("システム管理者参照");
 		String ReceptionTime, SendTime, RelayArriveTime, DeliStartTime, ReceiveTime, DeliFinishTime;
