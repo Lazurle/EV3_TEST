@@ -227,7 +227,7 @@ public final class Telecommunication{
 	 * @throws IOException :待機時間以内にコネクション確立処理が終了しなかった場合に投げられる
 	 */
 	private boolean getConnect(final Receiver receiver,final int waitTime,final ThreadState threadState) throws IOException{
-		Delay.msDelay(1000);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
+		Delay.msDelay(500);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
 		this.active_ComPartner=receiver;
 		this.com_cfou=new Com_ConnectorFunOpenUser();
 		this.com_cfou.start(receiver.getMacAddress(),threadState);//スレッド開始
@@ -262,7 +262,7 @@ public final class Telecommunication{
 		if(threadState!=ThreadState.Run_send && threadState!=ThreadState.Run_receive)
 			return false;
 
-		Delay.msDelay(1000);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
+		Delay.msDelay(500);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
 		BTConnector connector = new BTConnector();
 	    System.out.printf("wait connection\n");
 	    this.bt_connection = connector.waitForConnection(waitTime*this.CHANGE_S, BTConnection.RAW);
@@ -315,7 +315,7 @@ public final class Telecommunication{
 		if(threadState!=ThreadState.Run_send && threadState!=ThreadState.Run_receive)
 			return false;
 
-		Delay.msDelay(1000);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
+		Delay.msDelay(500);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
 		BTConnector connector = new BTConnector();
 	    System.out.printf("Search connect\n");
 

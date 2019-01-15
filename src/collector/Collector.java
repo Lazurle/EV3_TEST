@@ -111,9 +111,9 @@ public class Collector {
 				System.out.println(e);
 			}
 
-			if (receive_message.equals("")) {
-				continue;
-			}
+//			if (receive_message.equals("")) {
+//				continue;
+//			}
 			break;
 		}
 
