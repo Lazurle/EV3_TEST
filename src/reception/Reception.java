@@ -67,7 +67,7 @@ public class Reception {
 			if(rcp.sendFragile()){
 				if(waitFlag){
 					deliWaitStart = Calendar.getInstance();
-					deliWaitStart.add(Calendar.MINUTE, 5);	//荷物を渡した5分後に中継所引き渡し報告を受け取るを行う
+					deliWaitStart.add(Calendar.MINUTE, 7);	//荷物を渡した5分後に中継所引き渡し報告を受け取るを行う
 					waitFlag = false;
 				}
 			}
@@ -254,7 +254,7 @@ public class Reception {
 		String ans = "";
 		int waitTime = 0;
 
-        if(this.fragile.isEmpty() && this.deliWaitFrgl == null && sendContentToHQ.isEmpty() && !flag){		//やるべき動作がなければ、依頼の入力を長時間待つ
+        if(this.fragile.isEmpty() && sendContentToHQ.isEmpty() && !flag){		//やるべき動作がなければ、依頼の入力を長時間待つ
         		waitTime = 60;
         }
         else waitTime = 10;			//やるべき動作があるなら待ち時間を10秒に設定
@@ -356,10 +356,14 @@ public class Reception {
 
 			//ThreadStateを確認して、その状態から処理を決定する
 			this.state = this.teleToCllct.getThreadState_onlyOnce();
+
 			if(this.state == ThreadState.Death);
 			else if(this.state == ThreadState.Success)
 				recvContent = this.teleToCllct.getReceiveDetail_onlyOnce();
 			else return;
+
+
+			if(recvContent == null || recvContent.equals(""))return;
 
 			System.out.println("受信内容：" + recvContent);
 			this.save(recvContent, save.deliCompFrglNum, this.deliWaitFrgl);

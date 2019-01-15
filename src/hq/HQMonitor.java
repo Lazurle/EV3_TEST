@@ -6,8 +6,6 @@ import java.io.InputStreamReader;
 import java.util.Iterator;
 
 import fragile.Fragile;
-import fragile.*;
-import fragile.deliRecord.*;
 
 /**
  * 配達情報を参照する
@@ -188,7 +186,7 @@ public class HQMonitor {
 					System.out.println("配達完了時間：：" + DeliFinishTime.substring(0, 4) + "/"
 							+ DeliFinishTime.substring(4, 6) + "/" + DeliFinishTime.substring(6, 8) + " "
 							+ DeliFinishTime.substring(8, 10) + ":" + DeliFinishTime.substring(10, 12));
-					System.out.println("配達状況：" + fragile.getObsStats());
+					System.out.println("配達状況：" + fragile.getDeliStats());
 					System.out.println("障害状況：" + fragile.getObsStats());
 					System.out.println();
 				}

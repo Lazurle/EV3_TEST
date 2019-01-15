@@ -3,6 +3,7 @@ package hq;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -74,6 +75,11 @@ public class HQ {
 			System.out.println("中継所から受信を受け付けています（4秒）");
 			RelayMessage_String = telecommunicationReceiveFromRelay();//中継所から受信するメソッド（4秒)
 			if (!RelayMessage_String.isEmpty()) {
+				try {
+				Thread.sleep(1500);
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
 				determineOrder(RelayMessage_String);
 				RelayMessage_String = null;
 			}
@@ -314,7 +320,7 @@ public class HQ {
 	private void sendDeliRecord(String info) {
 		//info具体例：「障害状況の参照 | 201811191720」
 		String[] OrderMessage = info.split("\\|", -1);
-		long frglNum = Integer.parseInt(OrderMessage[1]);
+		long frglNum = Long.parseLong(OrderMessage[1]);
 		//荷物を検索する
 		int junban = searchFragile(frglNum);
 		//障害状況を参照する
@@ -324,11 +330,18 @@ public class HQ {
 		//switch (enum_Obs) {
 		//case none://障害無し
 			//中継所にコネクションを要求して、「依頼人、受取人情報と障害状況を送信する処理
-			SendDetail_String = adjust(Adjustment.obsClientInfo, junban);//加工命令：依頼,受取,障害
+			SendDetail_String = adjust(Adjustment.obsClientInfo, frglNum);//加工命令：依頼,受取,障害
 			TelecomResult_Boolean = telecommunicationSendToRelay(SendDetail_String);//中継所と通信し、成功したか判定するやつ。
 			if (TelecomResult_Boolean) {//送信成功
 				System.out.printf("中継所に情報：%s を送信しました。\n", SendDetail_String);
 				System.out.println();
+				System.out.println("Thread.sleep(5000)`実行中");
+				try {
+					Thread.sleep(5000);
+				}catch(InterruptedException e) {
+					e.printStackTrace();
+				}
+
 			} else {//送信失敗
 				System.out.println("送信失敗！再送作業に移行します。");
 				System.out.println("＊再送作業中も０または１を入力すると配達情報を参照できます。");
@@ -338,6 +351,12 @@ public class HQ {
 						if (TelecomResult_Boolean) {
 							System.out.println("中継所に" + SendDetail_String + "を送信成功");
 							System.out.println();
+							System.out.println("Thread.sleep(5000)`実行中");
+							try {
+								Thread.sleep(5000);
+							}catch(InterruptedException e) {
+								e.printStackTrace();
+							}
 							return;
 						}
 					} catch (Exception e) {
@@ -427,10 +446,11 @@ public class HQ {
 		switch (order_enum) {
 		case obsClientInfo://中継所への依頼,受取,障害状況の送信するための加工命令。
 			//依頼人情報を取得する
+			String frglNum_Str = String.valueOf(frglNum);
 			String ClientInfo[] = fragileFile.get(junban).getClientInfo();
 			//受取人情報を取得する
 			String HouseInfo[] = fragileFile.get(junban).getHouseInfo();
-			AdjustReturnData = "syncObs"+ "|" + ClientInfo[0] + "|" + ClientInfo[1] + "|" + ClientInfo[2] + "|" + HouseInfo[0] + "|"
+			AdjustReturnData = "syncObs"+ "|" + frglNum_Str + "|" + ClientInfo[0] + "|" + ClientInfo[1] + "|" + ClientInfo[2] + "|" + HouseInfo[0] + "|"
 					+ HouseInfo[1] + "|" + HouseInfo[2];
 			return AdjustReturnData;
 
@@ -558,11 +578,8 @@ public class HQ {
 	public String getCurrentTime() {
 		Calendar cal = Calendar.getInstance();//現在時刻の取得
 		String time_Str;
-		time_Str = String.valueOf(cal.get(Calendar.YEAR)) +
-				String.valueOf(cal.get(Calendar.MONTH)) +
-				String.valueOf(cal.get(Calendar.DATE)) +
-				String.valueOf(cal.get(Calendar.HOUR_OF_DAY)) +
-				String.valueOf(cal.get(Calendar.MINUTE));
+		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMddHHmm");
+		time_Str = sdf1.format(cal.getTime());//#=> 201106150449
 		return time_Str;
 	}
 
@@ -575,11 +592,8 @@ public class HQ {
 		Calendar cal = Calendar.getInstance();
 		String time_Str;
 		cal.add(Calendar.MINUTE, -minute);
-		time_Str = String.valueOf(cal.get(Calendar.YEAR)) +
-				String.valueOf(cal.get(Calendar.MONTH)) +
-				String.valueOf(cal.get(Calendar.DATE)) +
-				String.valueOf(cal.get(Calendar.HOUR_OF_DAY)) +
-				String.valueOf(cal.get(Calendar.MINUTE));
+		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMddHHmm");
+		time_Str = sdf1.format(cal.getTime());//#=> 201106150449
 		return time_Str;
 	}
 

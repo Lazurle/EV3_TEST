@@ -16,17 +16,17 @@ public class PidControl {
         p = KP * diff[1];
         i = KI * integral;
         d = KD * (diff[1] - diff[0]) / DELTA_T;
-        
-        
+
+
         // 最大・最小値を制限
-        return math_limit(p + i + d, -300, 300);
+        return math_limit(p + i + d, -360, 360);
     }
 
     public float math_limit(float val, float min, float max) {
         if (val < min) {
-            return min;
+            return 0;
         } else if (val > max) {
-            return max;
+            return 0;
         }
         return val;
     }

@@ -73,8 +73,8 @@ public class Collector {
 			break;
 		}
 
-		// 中継所引き渡しを完了済みにする
-		deliComp = true;
+		deliComp = false;
+		frglNum = 0;
 
 		System.out.println(deliComp);
 	}
@@ -165,20 +165,17 @@ public class Collector {
 
 			try {
 				System.out.println(send_message);
-				isSend = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
+				isSend = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 0);
 			} catch (Exception e) {
 				System.out.println(e);
 			}
 
-			if (isSend == false) {
-				continue;
-			}
-
 			// 収集ロボットが所有している荷物を破棄
-			frglNum = 0;
 
 			break;
 		}
+
+		deliComp = true;
 	}
 
 	/**
@@ -204,25 +201,17 @@ public class Collector {
 			Boolean isSuccess = false;
 
 			try {
-				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 120);
+				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 0);
 			} catch (Exception e) {
 				System.out.println(e);
-			}
-
-			if (isSuccess == false) {
-				continue;
 			}
 
 			String receive_message = "";
 
 			try {
-				receive_message = telecommunication.receiveSignal(Receiver.relay, Receiver.collector, 120);
+				receive_message = telecommunication.receiveSignal(Receiver.relay, Receiver.collector, 0);
 			} catch (Exception e) {
 				System.out.println(e);
-			}
-
-			if (receive_message.equals("")) {
-				continue;
 			}
 
 			System.out.println(receive_message);
@@ -261,13 +250,9 @@ public class Collector {
 			boolean isSuccess = false; // 共有変数開放が成功または失敗
 
 			try {
-				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 10);
+				isSuccess = telecommunication.sendSignal(send_message, Receiver.relay, Receiver.collector, 0);
 			} catch (Exception e) {
 				System.out.println(e);
-			}
-
-			if (isSuccess == false) {
-				continue;
 			}
 
 			// 中継所エリア進入許可解除

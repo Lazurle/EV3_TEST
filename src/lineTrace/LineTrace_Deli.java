@@ -25,13 +25,14 @@ public class LineTrace_Deli {
 			lt.distLineTrace(20, inTargetVal, outTargetVal, 100f, 150f, 0.9f);
 			color = lt.getRoadColor(rotateDeg);
 		}
+		lt.distStraight(100,50);
 		//衝突回避地点へ到達
 	}
 
 	//衝突回避地点から中継所へ移動するメソッド
 	public void ToRelay(){
 		float color;
-		lt.distLineTrace(350, inTargetVal,outTargetVal,100f,150f,1.1f);
+		lt.distLineTrace(300, inTargetVal,outTargetVal,100f,150f,1.1f);
 		color = lt.getRoadColor(-rotateDeg);
 		while(!(color <= 0.1)){
 			lt.distLineTrace(20,inTargetVal,outTargetVal,100f,150f,0.9f);
@@ -68,10 +69,10 @@ public class LineTrace_Deli {
 		lt.distLineTrace(490,outTargetVal,inTargetVal,230f, 200f, 0.9f);
 		color = lt.getRoadColor(rotateDeg);
 		while(!(color <= 0.3)){
-			lt.distLineTrace(20,outTargetVal,inTargetVal,100f, 150f, 0.7f);
+			lt.distLineTrace(15,outTargetVal,inTargetVal,100f, 150f, 0.7f);
 			color = lt.getRoadColor(rotateDeg);
 		}
-		lt.distStraight(100, 50);
+		lt.distStraight(100, 40);
 		lt.rotateDeg(170);
 		color = lt.getRoadColor(rotateDeg);
 		while(!(color >= 0.5)){
@@ -79,10 +80,10 @@ public class LineTrace_Deli {
 			color = lt.getRoadColor(rotateDeg);
 		}
 		lt.resetPid();
-		lt.distLineTrace(200, outTargetVal,inTargetVal,100f,150f,1.1f);
+		lt.distLineTrace(200, outTargetVal,inTargetVal,150f,150f,1.1f);
 		color = lt.getRoadColor(-rotateDeg);
 		while(!(color <= 0.4 && color >= 0.1)){
-			lt.distLineTrace(20,outTargetVal,inTargetVal,100f,150f,0.9f);
+			lt.distLineTrace(20,outTargetVal,inTargetVal,150f,150f,0.9f);
 			color = lt.getRoadColor(-rotateDeg);
 		}
 		//衝突回避地点から脱出
@@ -121,7 +122,7 @@ public class LineTrace_Deli {
 		//住宅エリアへ到達
 
 		for(int i = 0; i < Y; i++){
-			//lt.resetPid();
+			lt.resetPid();
 			//lt.rotateDeg(-5);
 			lt.distLineTrace(distV, outTargetVal, inTargetVal, 200f, 150f, 1.2f);
 			color = lt.getRoadColor(-rotateDeg);
@@ -141,8 +142,8 @@ public class LineTrace_Deli {
 			color = lt.getRoadColor(-rotateDeg);
 		}
 		for(int i = 3; i-X > 0; i--){
-			//lt.resetPid();
-			lt.rotateDeg(-5);
+			lt.resetPid();
+			//lt.rotateDeg(-5);
 			lt.distLineTrace(distN, outTargetVal, inTargetVal, 200f, 150f, 1.2f);
 			color = lt.getRoadColor(-rotateDeg);
 			while(!(color <= 0.4 && color >= 0.1)){
@@ -152,8 +153,8 @@ public class LineTrace_Deli {
 			lt.distStraight(100,80);
 		}
 
-		//lt.resetPid();
-		lt.rotateDeg(-10);
+		lt.resetPid();
+		//lt.rotateDeg(-10);
 		lt.distLineTrace(distV-100, outTargetVal, inTargetVal, 200f, 150f, 1.2f);
 
 		//受取人宅へ到達
@@ -172,7 +173,7 @@ public class LineTrace_Deli {
 			color = lt.getRoadColor(rotateDeg);
 		}
 		lt.resetPid();
-		lt.rotateDeg(5);
+		//lt.rotateDeg(5);
 		lt.distLineTrace(distN-200, inTargetVal, outTargetVal, 200f, 100f, 1f);
 		color = lt.getRoadColor(rotateDeg);
 		while(!(color <= 0.35 && color >= 0.1)){
@@ -184,8 +185,8 @@ public class LineTrace_Deli {
 		}
 		lt.distStraight(100,80);
 		for(int i = 3; i-X > 0; i--){
-			//lt.resetPid();
-			lt.rotateDeg(5);
+			lt.resetPid();
+			//lt.rotateDeg(5);
 			lt.distLineTrace(distN, inTargetVal, outTargetVal, 200f, 100f, 1f);
 			color = lt.getRoadColor(rotateDeg);
 			while(!(color <= 0.4 && color >= 0.1)){
@@ -207,8 +208,8 @@ public class LineTrace_Deli {
 			color = lt.getRoadColor(rotateDeg);
 		}
 		for(int i = 0; i < Y; i++){
-			//lt.resetPid();
-			lt.rotateDeg(5);
+			lt.resetPid();
+			//lt.rotateDeg(5);
 			lt.distLineTrace(distV, inTargetVal, outTargetVal, 200f, 100f, 1f);
 			color = lt.getRoadColor(rotateDeg);
 			while(!(color <= 0.4 && color >= 0.1)){
@@ -231,9 +232,9 @@ public class LineTrace_Deli {
 
 		Delay.msDelay(300);
 		lt.resetPid();
-		lt.rotateDeg(10);
+		//lt.rotateDeg(10);
 		lt.distLineTrace(1000,inTargetVal,outTargetVal,230f, 200f, 1f);
-		lt.rotateDeg(10);
+		//lt.rotateDeg(10);
 		lt.distLineTrace(500, inTargetVal, outTargetVal, 250f, 220f, 0.7f);
 		color = lt.getRoadColor(rotateDeg);
 		while(!(color <= 0.4 && color >= 0.1)){
@@ -253,14 +254,14 @@ public class LineTrace_Deli {
 	//衝突回避地点から待機所へ戻るメソッド
 	public void ReturnToWaiting(){
 		float color;
-		lt.rotateDeg(-10);
+		//lt.rotateDeg(-10);
 		lt.distLineTrace(700, outTargetVal, inTargetVal, 250f, 150f, 1.2f);
 		color = lt.getRoadColor(-rotateDeg);
 		while(!(color <= 0.4 && color >= 0.1)){
 			lt.distLineTrace(20, outTargetVal, inTargetVal, 250f, 150f, 0.9f);
 			color = lt.getRoadColor(-rotateDeg);
 		}
-		lt.rotateDeg(-10);
+		//lt.rotateDeg(-10);
 		lt.distLineTrace(150, outTargetVal, inTargetVal, 200f, 150f, 0.7f);
 		lt.rotateDeg(350);
 		color = lt.getRoadColor(-rotateDeg);

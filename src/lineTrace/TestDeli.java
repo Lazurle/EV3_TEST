@@ -15,8 +15,8 @@ public class TestDeli {
 		lDel.WaitingToCollision();
 		lDel.ToRelay();
 		lDel.RelayToCollision();
-		lDel.ToHouse(2, 2);
-		lDel.ReturnToRelay(2, 2);
+		lDel.ToHouse(3, 2);
+		lDel.ReturnToRelay(3, 2);
 		lDel.ToRelay();
 		lDel.RelayToCollision();
 		lDel.ReturnToWaiting();

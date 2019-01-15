@@ -22,7 +22,7 @@ import telecommunication.Telecommunication;
 import telecommunication.code.Deliver_House;
 import telecommunication.code.Relay_Deliver;
 
-public class DeliverStop {
+public class TestDeliverHouseStop {
 	private int reciTime = 0;
 	private boolean hasFragile = false;
 	// private int countGray = 0;
@@ -68,7 +68,7 @@ public class DeliverStop {
 
 			do {
 				try {
-					flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 0);
+					flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 2);
 				} catch (IOException ioe) {
 					continue;
 				}
@@ -76,7 +76,7 @@ public class DeliverStop {
 
 			do {
 				try {
-					syncDetail = this.telecommunication.receiveSignal(Receiver.relay, Receiver.deliver, 0);
+					syncDetail = this.telecommunication.receiveSignal(Receiver.relay, Receiver.deliver, 2);
 				} catch (IOException ioe) {
 					continue;
 				}
@@ -99,7 +99,7 @@ public class DeliverStop {
 
 		do {
 			try {
-				flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 0);
+				flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 2);
 			} catch (IOException ioe) {
 				continue;
 			}
@@ -116,7 +116,6 @@ public class DeliverStop {
 		do {
 			this.makeProtocol(Receiver.relay);
 		} while (this.isProtocol == false);
-		this.isProtocol=false;
 
 		this.lock();
 
@@ -138,7 +137,7 @@ public class DeliverStop {
 
 			do {
 				try {
-					flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 0);
+					flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 2);
 				} catch (IOException ioe) {
 					continue;
 				}
@@ -148,7 +147,7 @@ public class DeliverStop {
 
 			do {
 				try {
-					flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 0);
+					flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 2);
 				} catch (IOException ioe) {
 					continue;
 				}
@@ -171,7 +170,6 @@ public class DeliverStop {
 		do {
 			this.makeProtocol(Receiver.relay);
 		} while (this.isProtocol == false);
-		this.isProtocol=false;
 
 		this.freeLock();
 
@@ -184,13 +182,12 @@ public class DeliverStop {
 		do {
 			this.makeProtocol(Receiver.house);
 		} while (this.isProtocol == false);
-		this.isProtocol=false;
 
 		this.est = new EstConnection(this.telecommunication);
 
 		// スレッドの開始
 		// start thread
-		this.est.start(String.valueOf(this.adjust(Adjustment.adjustFragile)));
+		this.est.start(String.valueOf(this.fragile.getFrglNum()));
 
 		// コネクション確立まで待機
 		// wait until connection establish
@@ -221,7 +218,6 @@ public class DeliverStop {
 		do {
 			this.makeProtocol(Receiver.relay);
 		} while (this.isProtocol == false);
-		this.isProtocol=false;
 
 		this.freeLock();
 
@@ -238,7 +234,6 @@ public class DeliverStop {
 		do {
 			this.makeProtocol(Receiver.relay);
 		} while (this.isProtocol == false);
-		this.isProtocol=false;
 
 		this.lock();
 
@@ -259,7 +254,7 @@ public class DeliverStop {
 
 		do {
 			try {
-				flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 0);
+				flag = this.telecommunication.sendSignal(syncDetail, Receiver.relay, Receiver.deliver, 2);
 			} catch (IOException ioe) {
 				continue;
 			}
@@ -267,7 +262,7 @@ public class DeliverStop {
 
 		do {
 			try {
-				syncDetail = this.telecommunication.receiveSignal(Receiver.relay, Receiver.deliver, 0);
+				syncDetail = this.telecommunication.receiveSignal(Receiver.relay, Receiver.deliver, 10/* ? */);
 			} catch (IOException ioe) {
 				continue;
 			}
@@ -296,28 +291,28 @@ public class DeliverStop {
 	private void passFragile() {
 		// 送受信の内容を保持する変数
 		// hold send/receive details
-		String syncDetail="";
+		String syncDetail;
 
 		// 通信時に使用するフラグを保持するための変数
 		// hold telecommunication flag
 		boolean flag = false;
 
-		//syncDetail = this.adjust(Adjustment.clientHouseNameAddr);
+		syncDetail = this.adjust(Adjustment.clientHouseNameAddr);
 
 		Delay.msDelay(10);
 
-		//try {
-			//flag = this.telecommunication.sendSignal(syncDetail, Receiver.house, Receiver.deliver, 10);
-		//} catch (IOException ioe) {
-			//flag = false;
-			//System.out.println("House " + this.x + "-" + this.y + " did not reply.  Recorded Absent...");
-		//}
+		try {
+			flag = this.telecommunication.sendSignal(syncDetail, Receiver.house, Receiver.deliver, 120);
+		} catch (IOException ioe) {
+			flag = false;
+			System.out.println("House " + this.x + "-" + this.y + " did not reply.  Recorded Absent...");
+		}
 
-		//if (flag) {
+		if (flag) {
 			do {
 				Delay.msDelay(10);
 				try {
-					syncDetail = this.telecommunication.receiveSignal(Receiver.house, Receiver.deliver, 0);
+					syncDetail = this.telecommunication.receiveSignal(Receiver.house, Receiver.deliver, 2);
 				} catch (IOException ioe) {
 					continue;
 				}
@@ -335,7 +330,7 @@ public class DeliverStop {
 				do {
 					Delay.msDelay(10);
 					try {
-						flag = this.telecommunication.sendSignal(syncDetail, Receiver.house, Receiver.deliver, 0);
+						flag = this.telecommunication.sendSignal(syncDetail, Receiver.house, Receiver.deliver, 2);
 					} catch (IOException ioe) {
 						continue;
 					}
@@ -344,7 +339,7 @@ public class DeliverStop {
 				do {
 					Delay.msDelay(10);
 					try {
-						syncDetail = this.telecommunication.receiveSignal(Receiver.house, Receiver.deliver, 0);
+						syncDetail = this.telecommunication.receiveSignal(Receiver.house, Receiver.deliver, 2);
 					} catch (IOException ioe) {
 						continue;
 					}
@@ -356,8 +351,8 @@ public class DeliverStop {
 
 				this.hasFragile = false;
 			}
-		//} else
-			//this.fragile.setObsStats(ObsStats.absent);
+		} else
+			this.fragile.setObsStats(ObsStats.absent);
 	}
 
 	private void startTime() {
@@ -423,18 +418,7 @@ public class DeliverStop {
 			detail = "personAddName|" + tmpClient[0] + "|" + tmpClient[2] + "|" + tmpHouse[0] + "|" + tmpHouse[2];
 		} else if (order == Adjustment.adjustFragile) {
 			detail += "syncFrglNum|";
-
-			String[] tmpClient, tmpHouse;////////////////////////////////////////
-
-			tmpClient = this.fragile.getClientInfo();//////////////////////////////
-			tmpHouse = this.fragile.getHouseInfo();///////////////////////////////
-
-			// テスト時に使用
-			// for test usage
-			// detail="personAddrName|Ren Sato|0-0|Yuduki Suzuki|0-1";
-
-			detail += tmpClient[0] + "|" + tmpClient[2] + "|" + tmpHouse[0] + "|" + tmpHouse[2];
-			//detail += String.valueOf(this.fragile.getFrglNum());
+			detail += String.valueOf(this.fragile.getFrglNum());
 		} else
 			System.err.println("Warning!!  Error when adjust.");
 
@@ -566,7 +550,7 @@ public class DeliverStop {
 		// demand opponent after established connection
 		do {
 			try {
-				flag = this.telecommunication.sendSignal(syncDetail, partner, Receiver.deliver, 0);
+				flag = this.telecommunication.sendSignal(syncDetail, partner, Receiver.deliver, 120);
 			} catch (IOException ioe) {
 				continue;
 			}
@@ -578,7 +562,7 @@ public class DeliverStop {
 		// judge who communicate with
 		do {
 			try {
-				syncDetail = this.telecommunication.receiveSignal(partner, Receiver.deliver, 0);
+				syncDetail = this.telecommunication.receiveSignal(partner, Receiver.deliver, 20);
 			} catch (IOException ioe) {
 				continue;
 			}
@@ -625,14 +609,13 @@ public class DeliverStop {
 			System.out.println("Debug No.2");
 			// 相手識別
 			// recognize opponent
-			do {
-				this.makeProtocol(Receiver.relay);
-			} while (this.isProtocol == false);
-			this.isProtocol=false;
+			//do {
+				//this.makeProtocol(Receiver.relay);
+			//} while (this.isProtocol == false);
 
 			System.out.println("Debug No.3");
 
-			this.hasFragile = this.takeFragile();
+			this.hasFragile = true;//this.takeFragile();
 
 			// 荷物がないときはif内の処理はしない
 			// not process inside if sentence when no fragile
@@ -680,7 +663,6 @@ public class DeliverStop {
 				do {
 					this.makeProtocol(Receiver.relay);
 				} while (this.isProtocol == false);
-				this.isProtocol=false;
 
 				System.out.println("Debug No.7");
 

@@ -3,19 +3,19 @@ package telecommunication;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
-import lejos.remote.nxt.BTConnector;
-import lejos.remote.nxt.BTConnection;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.Calendar;
 
 import javax.microedition.io.Connection;
 import javax.microedition.io.Connector;
 import javax.microedition.io.InputConnection;
 import javax.microedition.io.OutputConnection;
 
-import java.net.*;
-
+import lejos.remote.nxt.BTConnection;
+import lejos.remote.nxt.BTConnector;
 import lejos.utility.Delay;
-import java.util.Calendar;
 
 /**
  * 通信クラス(共有クラス)
@@ -30,14 +30,14 @@ public final class Telecommunication{
     	this.threadState=ThreadState.Death;
     	this.resetSyncThread();
     }
-    
+
 	/**
 	 * Bluetoothを用いた通信において、openメソッドを使用する場合のマルチスレッド処理用クラス
 	 * @author 三森
 	 */
 	private class Com_ConnectorFunOpenUser extends Thread{
 		private String address;
-		
+
 		/**
 		 * マルチスレッドによる通信開始
 		 * @param address :EV3のMacアドレス
@@ -46,7 +46,7 @@ public final class Telecommunication{
 		public void start(final String address,final ThreadState ts){
 			if(ts!=ThreadState.Run_send && ts!=ThreadState.Run_receive)
 				return;
-			
+
 			this.address=address;
 			threadState=ts;
 			this.start();
@@ -59,13 +59,13 @@ public final class Telecommunication{
 						threadState=ThreadState.Fail;
 						return;
 					}
-					
+
 					if(threadState==ThreadState.Run_send)
 						dos = new DataOutputStream(((OutputConnection)connection).openOutputStream());
 					else if(threadState==ThreadState.Run_receive)
 						dis = new DataInputStream(((InputConnection)connection).openInputStream());
 					System.out.printf("%s : Connection ok\n",this.address);
-					
+
 					if(threadState==ThreadState.Run_send){
 						if(!send())
 							threadState=ThreadState.Fail;
@@ -74,7 +74,7 @@ public final class Telecommunication{
 						if(!receive())
 							threadState=ThreadState.Fail;
 					}
-						
+
 					try{
 						connection.close();
 						if(threadState==ThreadState.Run_send)
@@ -109,23 +109,23 @@ public final class Telecommunication{
 	 * Com_ConnectorFunOpenUserクラスのスレッドの状態を保持
 	 */
 	private ThreadState threadState;
-	
+
 	/* EV3の表示に関して
 	 * LCD.clear() & LCD.drawString("wait connection", 0, 1) は文字の削除が可能。但し自動スクロール機能なし(import lejos.hardware.lcd.LCD;)
 	 * System.out.println("")　は文字の削除不可能(システムが勝手に表示しているのはコレ)。自動スクロール機能あり
 	 */
-	
+
 	/**
 	 * 秒数の単位変換用
 	 */
 	private final short CHANGE_S=1000;
-	
+
 	/* 通信用インスタンスの変数の準備 */
 	private BTConnection bt_connection;
 	private Connection connection;
     private DataInputStream dis;
     private DataOutputStream dos;
-    
+
     /**
      * 送信する文字列
      */
@@ -134,7 +134,7 @@ public final class Telecommunication{
      * 受信する文字列
      */
     private String receiveDetail;
-    
+
     /**
      * 送信を行う
      * @return　送信結果(true:成功,false:失敗)
@@ -149,7 +149,7 @@ public final class Telecommunication{
     		System.err.println(ioe.getMessage());
     		return false;
     	}
-    	System.out.printf("send\n");
+    	System.out.printf("send : %s\n",this.sendDetail);
     	return true;
     }
     /**
@@ -167,7 +167,7 @@ public final class Telecommunication{
 		System.out.printf("receive : %s\n",this.receiveDetail);
 		return true;
 		*/
-    	
+
     	///////////////////デバック用/////////////////////////////////////////////////////
     	System.out.println("receive...");
     	final int wt=5;
@@ -200,7 +200,7 @@ public final class Telecommunication{
     	}
     }
     /////////////////////デバック用↑//////////////////////////////////////////////////////
-    
+
     /**
      * 送受信時の初期化処理
      * @throws RuntimeException :マルチスレッドによる処理の完了前に次の送受信を呼び出した場合に投げられる
@@ -210,14 +210,14 @@ public final class Telecommunication{
 			throw new RuntimeException(this.active_ComPartner.name()+" : getThreadState_onlyOnce()メソッドで実行状況をgetして下さい");
 		if(this.receiveDetail!=null)//受信内容を呼び出し元に渡していない(受信内容を呼び出し元がgetしていない)
 			throw new RuntimeException("受信内容をgetしていません。getReceiveDetail_onlyOnce()メソッドで受信内容をgetして下さい");
-		
+
 		this.sendDetail=this.receiveDetail=null;
 		this.bt_connection=null;
 		this.connection=null;
 		this.dis=null;
 		this.dos=null;
 	}
-	
+
 	/**
 	 * open()メソッドを使用し、コネクションを確立しにいく
 	 * @param receiver :通信相手
@@ -227,6 +227,7 @@ public final class Telecommunication{
 	 * @throws IOException :待機時間以内にコネクション確立処理が終了しなかった場合に投げられる
 	 */
 	private boolean getConnect(final Receiver receiver,final int waitTime,final ThreadState threadState) throws IOException{
+		Delay.msDelay(1000);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
 		this.active_ComPartner=receiver;
 		this.com_cfou=new Com_ConnectorFunOpenUser();
 		this.com_cfou.start(receiver.getMacAddress(),threadState);//スレッド開始
@@ -236,7 +237,7 @@ public final class Telecommunication{
 				System.out.printf("コネクションの確立に失敗しました。1分程度以内のインターバル後、%sに接続&通信を自動的に試みます。それまで他の通信は行えません。通信状態はgetThreadState_onlyOnce()メソッドで確認して下さい\n",this.active_ComPartner.name());
 				throw new IOException(this.active_ComPartner.name());//インターバル後にコネクションを試みる通信相手を例外として返す
 			}
-			
+
 			switch(this.getThreadState_onlyOnce()){
 			case Death:
 			case Fail:
@@ -250,7 +251,7 @@ public final class Telecommunication{
 		}
 		return false;
 	}
-	
+
 	/**
 	 * waitForConnection()メソッドを使用し、コネクションが確立するのを待つ
 	 * @param waitTime :待機時間
@@ -260,7 +261,8 @@ public final class Telecommunication{
 	private boolean waitConnect(final int waitTime,final ThreadState threadState){
 		if(threadState!=ThreadState.Run_send && threadState!=ThreadState.Run_receive)
 			return false;
-		
+
+		Delay.msDelay(1000);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
 		BTConnector connector = new BTConnector();
 	    System.out.printf("wait connection\n");
 	    this.bt_connection = connector.waitForConnection(waitTime*this.CHANGE_S, BTConnection.RAW);
@@ -270,14 +272,14 @@ public final class Telecommunication{
 		    return false;
         }
         System.out.printf("connection!\n");
-        
+
         this.waitThread();
-        
+
         if(threadState==ThreadState.Run_send)
         	this.dos = this.bt_connection.openDataOutputStream();
         else if(threadState==ThreadState.Run_receive)
         	this.dis = this.bt_connection.openDataInputStream();
-        
+
         if(threadState==ThreadState.Run_send){
         	if(!this.send())
         		return false;
@@ -301,7 +303,7 @@ public final class Telecommunication{
         }
         return true;
 	}
-	
+
 	/**
 	 * connect()メソッドを使用し、コネクションを確立しにいく
 	 * @param receiver :通信相手
@@ -312,10 +314,11 @@ public final class Telecommunication{
 	private boolean getConnectToEV3(final Receiver receiver,final int waitTime,final ThreadState threadState){
 		if(threadState!=ThreadState.Run_send && threadState!=ThreadState.Run_receive)
 			return false;
-		
+
+		Delay.msDelay(1000);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
 		BTConnector connector = new BTConnector();
 	    System.out.printf("Search connect\n");
-	    
+
 	    Calendar targetTime=Calendar.getInstance();
 		targetTime.add(Calendar.SECOND, waitTime);
 		while(true){
@@ -347,7 +350,7 @@ public final class Telecommunication{
         	this.dos = this.bt_connection.openDataOutputStream();
         else if(threadState==ThreadState.Run_receive)
         	this.dis = this.bt_connection.openDataInputStream();
-        
+
         if(threadState==ThreadState.Run_send){
         	if(!this.send())
         		return false;
@@ -371,7 +374,7 @@ public final class Telecommunication{
         }
         return true;
 	}
-	
+
 	private final int RECEPTION_HQ_PORT=5000;
 	private final int HOUSE_HQ_PORT=6000;
 	/**
@@ -382,7 +385,7 @@ public final class Telecommunication{
 	 * ソケット通信におけるアドレス
 	 */
 	private final String IP_ADDRESS="localhost";//サーバ側とクライアント側で同じパソコンで実行
-	
+
 	/**
 	 * ソケット通信におけるサーバ側
 	 * @param waitTime :待機時間
@@ -405,7 +408,7 @@ public final class Telecommunication{
 	        	this.dos = new DataOutputStream(sock.getOutputStream());
 	        else if(threadState==ThreadState.Run_receive)
 	        	this.dis = new DataInputStream(sock.getInputStream());
-	        
+
 	        if(threadState==ThreadState.Run_send){
 	        	if(!this.send()){
 	        		sock.close();
@@ -420,7 +423,7 @@ public final class Telecommunication{
 	        		return false;
 	        	}
 	        }
-	        
+
         	if(threadState==ThreadState.Run_send)
         		this.dos.close();
         	else if(threadState==ThreadState.Run_receive)
@@ -444,7 +447,7 @@ public final class Telecommunication{
 		}
 		return true;
 	}
-	
+
 	/**
 	 * ソケット通信におけるクライアント側
 	 * @param waitTime :待機時間
@@ -471,13 +474,13 @@ public final class Telecommunication{
 				continue;
 			}
 		}
-		
+
 		try{
 			if(threadState==ThreadState.Run_send)
 				this.dos = new DataOutputStream(sock.getOutputStream());
 			else if(threadState==ThreadState.Run_receive)
 				this.dis = new DataInputStream(sock.getInputStream());
-			
+
 			if(threadState==ThreadState.Run_send){
 	        	if(!this.send()){
 	        		sock.close();
@@ -490,7 +493,7 @@ public final class Telecommunication{
 	        		return false;
 	        	}
 	        }
-	        
+
         	if(threadState==ThreadState.Run_send)
         		this.dos.close();
         	else if(threadState==ThreadState.Run_receive)
@@ -503,7 +506,7 @@ public final class Telecommunication{
 		}
 		return true;
 	}
-	
+
 	/**
 	 * 通信クラスで どのprivateメソッドを呼ぶかのプロトコル一覧
 	 */
@@ -517,7 +520,7 @@ public final class Telecommunication{
 	 */
 	private Protocol getProtocol (final Receiver pair,final Receiver issued) throws RuntimeException{
 		final String errMessage="定義されていない組み合わせです!";
-		
+
 		switch(issued){
 		case reception:
 			switch(pair){
@@ -528,7 +531,7 @@ public final class Telecommunication{
 				return Protocol.Socket_client;
 			default:
 				throw new RuntimeException(errMessage);
-			}		
+			}
 		case collector:
 			switch(pair){
 			case reception:
@@ -582,13 +585,13 @@ public final class Telecommunication{
 			throw new RuntimeException(errMessage);
 		}
 	}
-	 
+
 	/* ユーザによる入力や表示要求にリアルタイムで対応出来るようにした*/
 	/**
 	 * 送信する。送信した結果が返り値として帰ってくる。
 	 * もし待機時間以内に通信が終了しなかった場合はIOExceptionが投げられてくる。この場合インターバル後(約1分後)にコネクションの確立と通信を自動的に試みる為(マルチスレッド処理)、getThreadState_onlyOnce()メソッドで通信状態を得る事が出来る。
 	 * 例外を返した場合、このメソッドを呼ばない限り、再度このメソッドを使用する事は出来ない。
-	 * 
+	 *
 	 * なお、上記を気にしなくてはいけないのは、EV3と通信を行う(Bluetoothを使用する)場合に「動く」となっているPCの送信の場合のみである。(EV3同士の通信は関係無し)
 	 * @param sendDetail :送信内容
 	 * @param receiver :送信先
@@ -601,7 +604,7 @@ public final class Telecommunication{
 	public boolean sendSignal(final String sendDetail,final Receiver receiver,final Receiver issued,final int waitTime) throws IOException,RuntimeException{
 		this.init();
 		this.sendDetail=sendDetail;
-		
+
 		switch(this.getProtocol(receiver, issued)){
 		case BT_open:
 			return this.getConnect(receiver, waitTime, ThreadState.Run_send);
@@ -622,7 +625,7 @@ public final class Telecommunication{
 	 * もし待機時間以内に通信が終了しなかった場合はIOExceptionが投げられてくる。この場合インターバル後(約1分後)にコネクションの確立と通信を自動的に試みる為(マルチスレッド処理)、getThreadState_onlyOnce()メソッドで通信状態を得る事が出来る。
 	 * また、成功した場合はgetReceive_onlyOnce()メソッドで受信内容を得る事が出来る。
 	 * 例外を返した場合、これらのメソッドを呼ばない限り、再度このメソッドを使用する事は出来ない。
-	 * 
+	 *
 	 * なお、上記を気にしなくてはいけないのは、EV3と通信を行う(Bluetoothを使用する)場合に「動く」となっているPCの受信の場合のみである。(EV3同士の通信は関係無し)
 	 * @param sender :送信元
 	 * @param issued :受信を行うシステム
@@ -634,7 +637,7 @@ public final class Telecommunication{
 	public String receiveSignal(final Receiver sender,final Receiver issued,final int waitTime) throws IOException,RuntimeException{
 		this.init();
 		final String FALSE_STRING="";//受信失敗時に返す文字列
-		
+
 		switch(this.getProtocol(sender, issued)){
 		case BT_open:
 			if(this.getConnect(sender, waitTime, ThreadState.Run_receive))
@@ -661,7 +664,7 @@ public final class Telecommunication{
 		}
 		return FALSE_STRING;
 	}
-	
+
 	/**
 	 * マルチスレッドの状態を返す。
 	 * このメソッドは1スレッド(1ループ)での処理で2回以上呼ばないこと。
@@ -684,7 +687,7 @@ public final class Telecommunication{
 			throw new RuntimeException("定義されていない状態がthreadStateに格納されています");
 		}
 	}
-	
+
 	/**
 	 * 受信内容を返す。
 	 * このメソッドは1スレッド(1ループ)での処理で2回以上呼ばないこと。
@@ -695,13 +698,13 @@ public final class Telecommunication{
 	public synchronized String getReceiveDetail_onlyOnce() throws RuntimeException{
 		if(this.receiveDetail==null)
 			throw new RuntimeException("何も受信していません");
-		
+
 		String tmp=this.receiveDetail;
 		this.receiveDetail=null;
 		return tmp;
 	}
-	
-	
+
+
 	/*スレッドの同期処理実装*/
 	/**
 	 * スレッドのwait・notifyを実行するかどうか。
@@ -740,7 +743,7 @@ public final class Telecommunication{
     		}
     	}
 	}
-	
+
 	/**
 	 * 送受信処理を開始する。
 	 * @exception RuntimeException :設定をONにしていないのに、このメソッドを呼び出した場合に投げられる

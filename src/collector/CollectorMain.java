@@ -9,6 +9,6 @@ public class CollectorMain {
 		// 実行
 		collector.executeMain();
 		// collector.executeMainWithoutLineTrace();
-		// collector.reportDeli();
+		// collector.passFragile();
 	}
 }

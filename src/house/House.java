@@ -52,6 +52,59 @@ public class House {
 	Receiver partner;//現在通信中の相手を保持
 	boolean isProtocol;
 
+	//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+		//荷物を渡すには受取人宅の情報を判定し、正しかったら受け取る。
+		public void takeFrglfromDeli() {
+			int i=0;
+			String reciDetail;
+
+
+			while(true) {
+
+				//プロトコルを確認する
+				do{
+					//Delay.msDelay(1000);//////////////////////////////////
+					this.receiveProtocol();
+					//Delay.msDelay(1000);//////////////////////////////////
+					this.sendProtocol();
+				}while(this.isProtocol ==false);
+
+				//Delay.msDelay(1000);
+				//中継から配達ロボットが荷物を持って衝突回避地点を抜けた報告を受けルことを伝えるために
+				/*
+				int count = 0;
+				do{
+					//Delay.msDelay(1000);
+					reciDetail=this.receiveInfo();
+					System.out.println(++count);
+				} while(!reciDetail.equals("deliPassPoint"));
+				 */
+				//frglNum　　荷物番号を受け取る
+				/*do{
+					reciDetail=this.receiveInfo();
+				} while(this.isLong(reciDetail));*/
+
+				//依頼人と受取人宅の住所と氏名を受け取る
+				this.recieveClientInfo();
+				System.out.println("finish recieveClientInfo");
+				//受取人住所、受取人氏名を照合する
+				//照合結果を受信する（syncJudge+judgeFlag）
+				Boolean result = sendHouseInfo();
+
+				System.out.println(++i+""+result);
+
+				//荷物番号を受取、照合結果がtrueだったら、syncHasReceived+trueと返す
+					if(result == true){
+						do{
+						takeFragile();
+						}while(this.isProtocol == false);
+					}
+				}
+			}
+
+		//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+
 	/*------------------------------------------------------------------------------------------------*/
 
 	//プロトコル通信
@@ -148,6 +201,7 @@ public class House {
 
 
 			try {
+				//Delay.msDelay(1000);
 				receive=tele.receiveSignal(Receiver.deliver, Receiver.house, 3);
 				partner=Receiver.collector;
 
@@ -182,7 +236,7 @@ public class House {
 			}
 
 		}
-
+		System.out.println("return false");
 		return false;
 	}
 
@@ -255,44 +309,23 @@ public class House {
 		}
 
 	/*------------------------------------------------------------------------------------------------*/
-	//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
-	//荷物を渡すには受取人宅の情報を判定し、正しかったら受け取る。
-	public void takeFrglfromDeli() {
-		int i=0;
-		String reciDetail;
 
-		while(true){
-			do{
-				reciDetail=this.receiveInfo();
-			} while(!reciDetail.equals("deliPassPoint"));
 
-			do{
-				Delay.msDelay(500);//////////////////////////////////
-				this.receiveProtocol();
-				Delay.msDelay(500);//////////////////////////////////
-				this.sendProtocol();
-			}while(this.isProtocol ==false);
-
-			this.recieveClientInfo();
-
-			Boolean result = sendHouseInfo();
-
-			System.out.println(++i+""+result);
-
-				if(result == true){
-					do{
-					takeFragile();
-					}while(this.isProtocol == false);
-				}
-			}
+	/*//long型かどうかを判定する
+	private boolean isLong(String frglNum){
+		try{
+			Long.parseLong(frglNum);
+		}
+		catch(NumberFormatException nfe){
+			return false;
 		}
 
-	//＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
-	/*------------------------------------------------------------------------------------------------*/
+		return true;
+	}*/
 
 	//情報を送信する
 	private void sendInfo(String contentSend){
-
+		System.out.println("in sendInfo");
 		Receiver partner;//現在通信中の相手を保持
 		ThreadState state=ThreadState.Death;//現在通信中の相手の状態
 

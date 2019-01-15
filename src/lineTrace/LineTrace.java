@@ -54,12 +54,12 @@ public class LineTrace {
 		}
 		//this.stopMotor();
 		this.stopMotor(leftMotor,rightMotor);
-		Delay.msDelay(500);
+		Delay.msDelay(1000);
 		leftMotor.close();
 		rightMotor.close();
-		Delay.msDelay(500);
+		Delay.msDelay(1000);
 	}
-	
+
 	/*指定された早さで指定された距離だけ直進する
 	  speed:早さ
 	  targetDis:走行距離
@@ -79,9 +79,10 @@ public class LineTrace {
 		}
 		//this.stopMotor();
 		this.stopMotor(leftMotor,rightMotor);
-		Delay.msDelay(500);
+		Delay.msDelay(1000);
 		leftMotor.close();
 		rightMotor.close();
+		Delay.msDelay(1000);
 		this.resetPid();
 	}
 	/*
@@ -90,7 +91,7 @@ public class LineTrace {
 		rightMotor.stop();
 	}
 	*/
-	
+
 	public void stopMotor(EV3LargeRegulatedMotor leftMotor,EV3LargeRegulatedMotor rightMotor){
 		leftMotor.stop(true);
 		rightMotor.stop();
@@ -105,18 +106,19 @@ public class LineTrace {
 		rightMotor.setSpeed(100);
 		leftMotor.rotate(-deg,true);
 		rightMotor.rotate(deg);
-		Delay.msDelay(500);
+		Delay.msDelay(1000);
 		leftMotor.close();
 		rightMotor.close();
+		Delay.msDelay(1000);
 		this.resetPid();
 	}
-	
+
 	//pidの変数をリセットする
 	public void resetPid(){
 		light.fetchSample(cSample, 0);
 		pid.reset(0);
 	}
-	
+
 	/*現在地の搬送路の色を返す
 	  　搬送路に向かって角度を変える
 	  deg:回転する角度(正:左回り,負:右回り)
@@ -132,29 +134,30 @@ public class LineTrace {
 		light.fetchSample(cSample, 0);
 		leftMotor.rotate(deg,true);
 		rightMotor.rotate(-deg);
-		Delay.msDelay(500);
+		Delay.msDelay(1000);
 		leftMotor.close();
 		rightMotor.close();
+		Delay.msDelay(1000);
 		return cSample[0];
 	}
-	
+
 	//現在の機体の角度を返す
 	public float getGyro(){
 		gyro.fetchSample(gSample, 0);
 		return gSample[0];
 	}
-	
+
 	//機体の角度をリセットする
 	public void resetGyro(){
 		gSensor.reset();
 	}
-	
+
 	//Close処理
 	public void close(){
 		this.cSensor.close();
 		this.gSensor.close();
 	}
-	
+
 	/*移動距離を角度から測定する
 	  deg:動いた角度
 	*/

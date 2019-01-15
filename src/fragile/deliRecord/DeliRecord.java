@@ -115,7 +115,7 @@ public class DeliRecord {
 			throw new IllegalArgumentException("時間のフォーマットが不適切です");
 		}
 		//指定されたフィールドに時間を格納
-		c.set(Integer.parseInt(date[0]), Integer.parseInt(date[1]), Integer.parseInt(date[2]),
+		c.set(Integer.parseInt(date[0]), Integer.parseInt(date[1]) - 1, Integer.parseInt(date[2]),
 				Integer.parseInt(date[3]), Integer.parseInt(date[4]));
 	}
 
@@ -188,10 +188,10 @@ public class DeliRecord {
 			str = str.concat("0");
 		}
 		str = str.concat(String.valueOf(time.get(Calendar.DATE)));
-		if (time.get(Calendar.HOUR) < 10) {
+		if (time.get(Calendar.HOUR_OF_DAY) < 10) {
 			str = str.concat("0");
 		}
-		str = str.concat(String.valueOf(time.get(Calendar.HOUR)));
+		str = str.concat(String.valueOf(time.get(Calendar.HOUR_OF_DAY)));
 		if (time.get(Calendar.MINUTE) < 10) {
 			str = str.concat("0");
 		}

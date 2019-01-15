@@ -3,6 +3,7 @@ package collector;
 //パッケージとインポートは適宜行う
 import java.io.IOException;
 
+import lejos.utility.Delay;
 import telecommunication.Receiver;
 //import Deliver.Adjustment;
 import telecommunication.Telecommunication;
@@ -37,22 +38,23 @@ class CollectorProtocol {
 		//demand opponent after established connection
 		do {
 			try {
-				flag = this.telecommunication.sendSignal(syncDetail, partner, Receiver.collector, 20);
+				flag = this.telecommunication.sendSignal(syncDetail, partner, Receiver.collector, 0);
 			} catch (IOException ioe) {
 				continue;
 			}
 		} while (flag == false);
 
-		//Delay.msDelay(10);
+
 
 		System.out.println("protocol send done");
+		Delay.msDelay(1000);
 
 		//通信相手が正しいかを知る
 		//judge who communicate with
 		do {
 			try {
 				System.out.println("partner: " + partner.toString());
-				syncDetail = this.telecommunication.receiveSignal(partner, Receiver.collector, 20);
+				syncDetail = this.telecommunication.receiveSignal(partner, Receiver.collector, 0);
 			} catch (IOException ioe) {
 				continue;
 			}
