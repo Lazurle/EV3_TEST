@@ -2,16 +2,17 @@ package relay;
 
 public class LockTimer {
 	Lock lock = new Lock();
-	private long start = System.currentTimeMillis();
-	private int timer = 0;
+	private long start = 0;
+	private int limit = 0;
 
 	public LockTimer(Boolean b) {
+		setStart();
 		setLock(b);
 	}
 
 	public LockTimer(Boolean b, int time) {
 		setLock(b);
-		setTimer(time);
+		setLimit(time);
 	}
 
 	public void setLock(Boolean b) {
@@ -19,30 +20,33 @@ public class LockTimer {
 	}
 
 	public Boolean getLock() {
-		return lock.getLock() && timeJudge();
+		return lock.getLock() && isNoTimeLimit();
 	}
 
-	public void setStart() {
+	// このメソッドを呼び出した時点から、time(s)侵入できない
+	public void setLimit(int time) {
+		setStart();
+		limit = time;
+	}
+
+	private void setStart() {
 		start = System.currentTimeMillis();
 	}
 
-	public int getTimeSec() {
+	private Boolean isNoTimeLimit() {
+		int dif = limit - getTimeSec();
+		if (dif > 0) {
+			return false;
+		} else
+			return true;
+	}
+
+	// 経過時間を取得
+	private int getTimeSec() {
 		long end = System.currentTimeMillis();
 		long dif = end - start;
-		int res = (int) (dif * 1000);
+		int res = (int) (dif / 1000);
 		return res;
-	}
-
-	public void setTimer(int time) {
-		timer = time;
-	}
-
-	private Boolean timeJudge() {
-		int dif = timer - getTimeSec();
-		if (dif > 0)
-			return false;
-		else
-			return true;
 	}
 
 }

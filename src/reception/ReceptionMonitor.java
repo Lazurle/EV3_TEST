@@ -4,7 +4,10 @@ import java.io.*;
 
 import fragile.ClientInfo;
 
-
+/**
+ * 受付所の入力画面のクラス
+ * @author bp16052 鈴木亘
+ */
 public class ReceptionMonitor {
 
 	/**
@@ -36,12 +39,13 @@ public class ReceptionMonitor {
 			clientInfo.setHouseInfo(name, tel, addr);
 
 		} catch (IOException e) {
-	        System.out.println("例外" + e + "が発生しました");
+	        System.out.println("例外が発生しました");
+	        System.out.println(e);
 		}
 		
 		return clientInfo;
 	}
-
+	
 	/**
 	 * PCの画面に「エラー」と表示する
 	 * @param errDetail :エラーの詳細

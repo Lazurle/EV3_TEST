@@ -19,14 +19,14 @@ public class PidControl {
 
 
         // 最大・最小値を制限
-        return math_limit(p + i + d, -360, 360);
+        return math_limit(p + i + d, -300, 300);
     }
 
     public float math_limit(float val, float min, float max) {
         if (val < min) {
-            return 0;
+            return min;
         } else if (val > max) {
-            return 0;
+            return max;
         }
         return val;
     }

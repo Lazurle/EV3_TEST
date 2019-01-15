@@ -1,25 +1,29 @@
 package relay;
 
-import java.util.ArrayList;
-
 import fragile.Fragile;
 import telecommunication.code.Relay_Deliver;
 import telecommunication.code.Relay_HQ;
 
 public class InfoEditor {
+	String adjustInfo(Relay_Deliver order) {
+		return order.toString();
+	}
+
+	String adjustInfo(Relay_HQ order, Long num) {
+		return adjustInfo(order.toString(), num.toString());
+	}
+
+	String adjustInfo(Relay_HQ order, Long num, Integer time) {
+		return adjustInfo(order.toString(), num.toString(), time.toString());
+	}
+
 	String adjustInfo(Fragile send) {
-		ArrayList<String> tmp = new ArrayList<String>();
-		String[] tmpClient = send.getClientInfo();
-		String[] tmpHouse = send.getHouseInfo();
+		String[] tmpC = send.getClientInfo();
+		String[] tmpH = send.getHouseInfo();
+		String order = Relay_Deliver.syncFrglInfo.toString();
+		String num = String.valueOf(send.getFrglNum());
+		return adjustInfo(order, num, tmpC[0], tmpC[2], tmpH[0], tmpH[2]);
 
-		tmp.add(Relay_Deliver.syncFrglInfo.toString());
-		tmp.add(String.valueOf(send.getFrglNum()));
-		tmp.add(tmpClient[0]);
-		tmp.add(tmpClient[2]);
-		tmp.add(tmpHouse[0]);
-		tmp.add(tmpHouse[2]);
-
-		return combineInfo(tmp.toArray(new String[tmp.size()]));
 	}
 
 	private String adjustInfo(String order, String num) {
@@ -27,17 +31,14 @@ public class InfoEditor {
 		return combineInfo(tmp);
 	}
 
-	String adjustInfo(Relay_HQ order, Long num) {
-		return adjustInfo(order.toString(), num.toString());
-	}
-
 	private String adjustInfo(String order, String num, String time) {
 		String[] tmp = { order, num, time };
 		return combineInfo(tmp);
 	}
 
-	String adjustInfo(Relay_HQ order, Long num, Integer time) {
-		return adjustInfo(order.toString(), num.toString(), time.toString());
+	private String adjustInfo(String order, String num, String cname, String caddr, String hname, String haddr) {
+		String[] tmp = { order, num, cname, caddr, hname, haddr };
+		return combineInfo(tmp);
 	}
 
 	private String combineInfo(String[] strings) {

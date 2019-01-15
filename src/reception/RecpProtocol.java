@@ -2,12 +2,16 @@ package reception;
 
 
 import java.io.IOException;
+import lejos.utility.Delay;
+import telecommunication.Telecommunication;
+import telecommunication.Receiver;
+import telecommunication.ThreadState;
 import java.util.Calendar;
 
-import telecommunication.Receiver;
-import telecommunication.Telecommunication;
-import telecommunication.ThreadState;
-
+/**
+ * 受付所のEV3との通信プロトコルを定義したクラス
+ * @author bp16052 鈴木亘
+ */
 class RecpProtocol {
 	Telecommunication telecommunication = new Telecommunication();
 
@@ -16,6 +20,10 @@ class RecpProtocol {
 	// //////////////////////////////////////////////////////////////////////////////////
 
 	// protocol communication
+	/**
+	 * 収集ロボットが通信時に誤った通信相手に情報を受信または送信しないためのメソッド
+	 * @return 通信相手の成否（通信相手が正しいならtrue, 間違っていたらfalse）
+	 */
 	boolean makeProtocol() {
 		String syncDetail = "";
 		boolean flag = false;
@@ -45,7 +53,7 @@ class RecpProtocol {
 				}
 				//1分経ったらfalseを返す
 				Calendar end = Calendar.getInstance();
-				if (end.getTimeInMillis() - start.getTimeInMillis() >= 60000) {
+				if (end.getTimeInMillis() - start.getTimeInMillis() >= 60000) {		
 					System.out.println("プロトコル：タイムアウト");
 					return false;
 				}
@@ -54,13 +62,13 @@ class RecpProtocol {
 
 			//1分経ったらfalseを返す
 			Calendar end = Calendar.getInstance();
-			if (end.getTimeInMillis() - start.getTimeInMillis() >= 60000) {
+			if (end.getTimeInMillis() - start.getTimeInMillis() >= 60000) {		
 				System.out.println("プロトコル：タイムアウト");
 				return false;
 			}
-
+			
 			//Delay.msDelay(1500);
-
+			
 			//通信部分
 			try {
 				syncDetail = this.telecommunication.receiveSignal(Receiver.collector, Receiver.reception, 10);
@@ -112,7 +120,7 @@ class RecpProtocol {
 			}
 
 			//Delay.msDelay(1500);
-
+			
 			try {
 				System.out.println(syncDetail);
 				if (this.telecommunication.sendSignal(syncDetail,

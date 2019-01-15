@@ -41,25 +41,30 @@ public class Reception {
 
 	private Queue<String> sendContentToHQ = new LinkedList<String>(); // 本部へ送れなかったデータを格納する待ち行列
 
+	private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
 	/**
 	 *  コントロールメソッド
 	 *  受付所の一連の動作を行うメインメソッド
 	 *  荷物の依頼　→　収集ロボットに荷物を渡す　→　中継所引き渡し報告を受け取る　→　本部に報告　→　荷物の依頼　→　...	の順で繰り返す
+	 * @param args
+	 * @throws IllegalArgumentException
+	 * @throws IOException
+	 * @throws InterruptedException
 	 */
 	public static void main(String args[]) throws IllegalArgumentException, IOException, InterruptedException {
 		Reception rcp = new Reception();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		Calendar deliWaitStart = Calendar.getInstance();		//収集ロボットに荷物を渡した時間を記録する変数
-		boolean waitFlag = true;	//deliWaitStartの更新をするかどうかを判定する変数
-        boolean deliWaitFlag = false;
+		final int deliWaitTime = 8;			//収集ロボットに荷物を渡した後から通信を行うまでの待ち時間
+		boolean waitFlag = true;		//deliWaitStartの更新をするかどうかを判定する変数
+        boolean deliWaitFlag = false;	//中継所引き渡し報告を受け取る動作を行うか判定する変数
 
         while(true){
 
             System.out.println("-------------------入力待ち中----------------------------------------");
 
 			// 荷物の依頼を行う
-			rcp.requestFrgl(deliWaitFlag, reader);
+			rcp.requestFrgl(deliWaitFlag);
 
             System.out.println("-------------------処理中-------------------------------------------");        	//以下はタイムアウトしてもしなくても動作する処理
 
@@ -67,7 +72,7 @@ public class Reception {
 			if(rcp.sendFragile()){
 				if(waitFlag){
 					deliWaitStart = Calendar.getInstance();
-					deliWaitStart.add(Calendar.MINUTE, 7);	//荷物を渡した5分後に中継所引き渡し報告を受け取るを行う
+					deliWaitStart.add(Calendar.MINUTE, deliWaitTime);	//荷物を渡したdeliWaitTime分後に中継所引き渡し報告を受け取るを行う
 					waitFlag = false;
 				}
 			}
@@ -76,7 +81,7 @@ public class Reception {
     		if(rcp.deliWaitFrgl != null){
     			deliWaitFlag = deliWaitStart.before(Calendar.getInstance());
     			if(deliWaitFlag){
-    				rcp.receivePassingResult();
+    				rcp.receivePassingResult();		//中継所引き渡し報告の受取
     				if(rcp.deliWaitFrgl == null){
     					waitFlag = true;
     					deliWaitFlag = false;
@@ -92,169 +97,17 @@ public class Reception {
 	}//ここまでmain
 
 	/**
-	 * 依頼情報が適切か判定するメソッド
-	 * @param info :判定する依頼情報
-	 * @return 依頼情報が適切ならtrue, 不適切ならfalse
+	 * 荷物の依頼を行うメソッド
+	 * 依頼情報を入力データから作成し、荷物を作成する
+	 * @param flag :荷物送信後、収集ロボットと通信を行うか判定するデータ（trueなら収集ロボットと通信可能）
+	 * @throws IOException
+	 * @throws InterruptedException
 	 */
-	private Boolean judgeClient(ClientInfo info) {
-		if(info.getClientName() == null || info.getClientTel() == null || info.getHouseName() == null || info.getHouseTel() == null)
-			return false;
-		else if (!judgeAddress(info.getClientAddr()))
-			return false;
-		else if (!judgeAddress(info.getHouseAddr()))
-			return false;
-		else
-			return true;
-	}
-
-	/**
-	 * 文字列が数値かどうか判定するメソッド
-	 * @param str :判定する文字列
-	 * @return 文字列が数値ならtrue, それ以外ならfalse
-	 */
-	public boolean isNumber(String str) {
-		try {
-			Integer.parseInt(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	/**
-	 *  住所が正しいか判定するメソッド
-	 *  @param str :判定する文字列
-	 *  @return 住所として適切ならtrue, 不適切ならfalse
-	 */
-	public boolean judgeAddress(String str) {
-		if (str.length() == 3) {
-			if (isNumber(String.valueOf(str.charAt(0)))
-					&& isNumber(String.valueOf(str.charAt(2)))
-					&& str.charAt(1) == '-') {
-
-				// i1,i2 に住所の番号を格納する
-				int i1 = Integer.parseInt(String.valueOf(str.charAt(0)));
-				int i2 = Integer.parseInt(String.valueOf(str.charAt(2)));
-
-				// 住所の番号の値が範囲内（0 から 3）か判定する
-				if (0 <= i1 && i1 <= 3 && 0 <= i2 && i2 <= 3) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * 荷物番号を計算するメソッド
-	 * @param cal :依頼を受け付けた時間
-	 * @return 年月日時分秒までの時間をlong型へ変換した数値
-	 */
-	private long calcFrglNum(Calendar cal) {
-		long frglNum;
-		frglNum = cal.get(Calendar.SECOND);
-		frglNum += 100 * cal.get(Calendar.MINUTE);
-		frglNum += 10000 * cal.get(Calendar.HOUR_OF_DAY);
-		frglNum += 1000000 * cal.get(Calendar.DATE);
-		frglNum += 100000000 * (cal.get(Calendar.MONTH) + 1);
-		frglNum += 10000000000L * (Long.valueOf(cal.get(Calendar.YEAR)));
-		return frglNum;
-	}
-
-
-	/**
-	 * 中継所引き渡し待ち荷物を取り出すメソッド
-	 * @return 中継所引き渡し完了待ち荷物（deliWaitFrgl）に入っていた荷物
-	 */
-	private Fragile pickFragile() {
-		Fragile frgl = this.deliWaitFrgl;
-		this.deliWaitFrgl = null;
-		return frgl;
-	}
-
-	/**
-	 * 加工した情報を記録するメソッド
-	 * @param content :加工する内容
-	 * @param order :命令番号
-	 * @param frgl :中継所引き渡し完了待ち荷物
-	 */
-	private void save(String content, save order, Fragile frgl) {
-		String[] str = content.split("\\|", 0);
-		if (str[0].equals(Reception_Collector.setDeliCompFrglNum.toString())) {
-			// frgl.frglNum = Long.parseLong(str[1]);
-			if(str[2].equals("true"))
-				frgl.setDeliStats(DeliStats.delivered);
-			else if(str[2].equals("false"))
-				frgl.setObsStats(ObsStats.failedPassing);
-		}
-	}
-
-	/**
-	 * 情報を加工するメソッド
-	 * @param order :命令番号
-	 * @return 各命令番号の手段で加工されたデータ
-	 */
-	private String adjustInfo(String order) {
-		String data = null;
-		long num = 0;
-
-
-		switch (order) {
-
-		// 荷物番号を送るための情報を文字列にまとめる処理
-		case "syncFrglNum":
-			num = (this.fragile.peek()).getFrglNum();
-			String frglNum = String.valueOf(num);
-			data = order + "|" + frglNum;
-			break;
-
-		/*
-		// 中継所引き渡し完了についての情報を文字列にまとめる処理
-		case "setFailedPassing":
-			num = this.deliWaitFrgl.getFrglNum();
-			data = "setFailedPassing" + "|" + num + "|" + this.deliWaitFrgl.getObsStats().toString();
-			break;
-		*/
-		case "makeFragile":
-			String[] clientInfo = this.deliWaitFrgl.getClientInfo();
-			String[] houseInfo = this.deliWaitFrgl.getHouseInfo();
-				data = order
-						+ "|"
-						+ String.valueOf(this.deliWaitFrgl.getFrglNum())
-						+ "|"
-						+ clientInfo[0]
-						+ "|"
-						+ clientInfo[1]
-						+ "|"
-						+ clientInfo[2]
-						+ "|"
-						+ houseInfo[0]
-						+ "|"
-						+ houseInfo[1]
-						+ "|"
-						+ houseInfo[2]
-						+ "|"
-						+ (this.deliWaitFrgl.getStrTime("receptionTime"))
-						+ "|"
-						+ (this.deliWaitFrgl.getStrTime("sendTime"));
-			break;
-		}
-
-		return data;
-	}
-
-	/**
-	 *  荷物の依頼を行うメソッド
-	 *  依頼情報を入力データから作成し、荷物を作成する
-	 *  @param flag :荷物送信後、収集ロボットと通信を行うか判定するデータ（trueなら収集ロボットと通信可能）
-	 *  @param reader :標準入力を使うためのデータ
-	 */
-	private void requestFrgl(boolean flag, BufferedReader reader) throws IOException, InterruptedException {
+	private void requestFrgl(boolean flag) throws IOException, InterruptedException {
 		String ans = "";
 		int waitTime = 0;
 
-        if(this.fragile.isEmpty() && sendContentToHQ.isEmpty() && !flag){		//やるべき動作がなければ、依頼の入力を長時間待つ
+        if((this.fragile.isEmpty() || this.deliWaitFrgl != null) && sendContentToHQ.isEmpty() && !flag){		//やるべき動作がなければ、依頼の入力を長時間待つ
         		waitTime = 60;
         }
         else waitTime = 10;			//やるべき動作があるなら待ち時間を10秒に設定
@@ -266,8 +119,8 @@ public class Reception {
         System.out.println("依頼情報を入力するにはEnterを押してください");
 
 		while(targetTime.after(Calendar.getInstance())){
-			if(reader.ready()){
-				ans = reader.readLine();
+			if(this.reader.ready()){
+				ans = this.reader.readLine();
 				break;
 			}
         	Thread.sleep(100);
@@ -301,8 +154,10 @@ public class Reception {
 
 
 	/**
-	 *  荷物を渡すメソッド
-	 *  @return 荷物番号送信の成否（成功したらtrue, 失敗ならfalse）
+	 * 荷物を渡すメソッド
+	 * @return 荷物番号送信の成否（成功したらtrue, 失敗ならfalse）
+	 * @throws IllegalArgumentException
+	 * @throws RuntimeException
 	 */
 	private boolean sendFragile() throws IllegalArgumentException, RuntimeException {
 		if (!this.fragile.isEmpty() && this.deliWaitFrgl == null) {
@@ -344,7 +199,9 @@ public class Reception {
 	}
 
 	/**
-	 *  中継所引き渡し結果を受け取るメソッド
+	 * 中継所引き渡し結果を受け取るメソッド
+	 * @throws IOException
+	 * @throws RuntimeException
 	 */
 	private void receivePassingResult() throws IOException, RuntimeException {
 		//String sendContent = "";
@@ -356,36 +213,43 @@ public class Reception {
 
 			//ThreadStateを確認して、その状態から処理を決定する
 			this.state = this.teleToCllct.getThreadState_onlyOnce();
-
 			if(this.state == ThreadState.Death);
 			else if(this.state == ThreadState.Success)
 				recvContent = this.teleToCllct.getReceiveDetail_onlyOnce();
 			else return;
 
-
 			if(recvContent == null || recvContent.equals(""))return;
 
 			System.out.println("受信内容：" + recvContent);
-			this.save(recvContent, save.deliCompFrglNum, this.deliWaitFrgl);
 
-			if (this.deliWaitFrgl.getObsStats() == ObsStats.failedPassing) {
-				// 中継所引き渡し失敗の場合
-				Fragile frgl = this.pickFragile();	//中継所引き渡し完了待ち荷物を荷物の待ち行列に追加
-				frgl.setDeliStats(DeliStats.awaiting);
-				this.fragile.add(frgl);
-				return;
-			} else {
-				// 中継所引き渡し完了の場合
-				this.deliWaitFrgl = null;
-				return;
+			if(this.save(recvContent, save.deliCompFrglNum, this.deliWaitFrgl)){	//受信内容が中継所引き渡し報告か判定
+				System.out.println("中継所引き渡し報告受取成功");
+				if (this.deliWaitFrgl.getObsStats() == ObsStats.failedPassing) {
+					// 中継所引き渡し失敗の場合
+					Fragile frgl = this.pickFragile();	//中継所引き渡し完了待ち荷物を荷物の待ち行列に追加
+					frgl.setDeliStats(DeliStats.awaiting);
+					this.fragile.add(frgl);
+					return;
+				} else {
+					// 中継所引き渡し完了の場合
+					this.deliWaitFrgl = null;
+					return;
+				}
+
 			}
+			System.out.println("中継所引き渡し報告受取失敗");
+			return;
 		}
-	return;
-}
+		return;
+	}
 
 
 
-	// 本部へ報告する
+	/**
+	 *  本部へ報告する
+	 * @throws IOException
+	 * @throws RuntimeException
+	 */
 	private void sendDataToHQ() throws IOException, RuntimeException{
 		if (!this.sendContentToHQ.isEmpty()) {
 			System.out.println("送信に失敗した情報を本部に報告中");
@@ -394,6 +258,160 @@ public class Reception {
 			}
 		}
 	}
+
+	/**
+	 * 依頼情報が適切か判定するメソッド
+	 * すべての情報がnullでないかと住所が正しいかを判定する
+	 * @param info :判定する依頼情報
+	 * @return 依頼情報が適切ならtrue, 不適切ならfalse
+	 */
+	private Boolean judgeClient(ClientInfo info) {
+		if(info.getClientName() == null || info.getClientTel() == null || info.getHouseName() == null || info.getHouseTel() == null)
+			return false;
+		else if (!judgeAddress(info.getClientAddr()))
+			return false;
+		else if (!judgeAddress(info.getHouseAddr()))
+			return false;
+		else
+			return true;
+	}
+
+	/**
+	 *  住所が正しいか判定するメソッド
+	 *  @param str :判定する文字列
+	 *  @return 住所として適切ならtrue, 不適切ならfalse
+	 */
+	public boolean judgeAddress(String str) {
+		if (str.length() == 3) {
+			if (isNumber(String.valueOf(str.charAt(0)))
+					&& isNumber(String.valueOf(str.charAt(2)))
+					&& str.charAt(1) == '-') {
+
+				// i1,i2 に住所の番号を格納する
+				int i1 = Integer.parseInt(String.valueOf(str.charAt(0)));
+				int i2 = Integer.parseInt(String.valueOf(str.charAt(2)));
+
+				// 住所の番号の値が範囲内（0 から 3）か判定する
+				if (0 <= i1 && i1 <= 3 && 0 <= i2 && i2 <= 3) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * 文字列が数値かどうか判定するメソッド
+	 * @param str :判定する文字列
+	 * @return 文字列が数値ならtrue, それ以外ならfalse
+	 */
+	public boolean isNumber(String str) {
+		try {
+			Integer.parseInt(str);
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * 荷物番号を計算するメソッド
+	 * @param cal :依頼を受け付けた時間
+	 * @return 年月日時分秒までの時間をlong型へ変換した数値
+	 */
+	private long calcFrglNum(Calendar cal) {
+		long frglNum;
+		frglNum = cal.get(Calendar.SECOND);
+		frglNum += 100 * cal.get(Calendar.MINUTE);
+		frglNum += 10000 * cal.get(Calendar.HOUR_OF_DAY);
+		frglNum += 1000000 * cal.get(Calendar.DATE);
+		frglNum += 100000000 * (cal.get(Calendar.MONTH) + 1);
+		frglNum += 10000000000L * (Long.valueOf(cal.get(Calendar.YEAR)));
+		return frglNum;
+	}
+
+
+	/**
+	 * 中継所引き渡し待ち荷物を取り出すメソッド
+	 * このメソッドを使用した場合、中継所引き渡し完了待ち荷物にはnullが代入される
+	 * @return 中継所引き渡し完了待ち荷物（deliWaitFrgl）に入っていた荷物
+	 */
+	private Fragile pickFragile() {
+		Fragile frgl = this.deliWaitFrgl;
+		this.deliWaitFrgl = null;
+		return frgl;
+	}
+
+	/**
+	 * 加工した情報を記録するメソッド
+	 * @param content :加工する内容
+	 * @param order :命令番号
+	 * @param frgl :中継所引き渡し完了待ち荷物
+	 * @return 加工する内容の先頭にある命令番号が正しければtrue,それ以外はfalseを返す
+	 */
+	private boolean save(String content, save order, Fragile frgl) {
+		String[] str = content.split("\\|", 0);
+		if (str[0].equals(Reception_Collector.setDeliCompFrglNum.toString())) {		//命令番号が正しいか判定
+			if(str[2].equals("true"))
+				frgl.setDeliStats(DeliStats.delivering);
+			else if(str[2].equals("false"))
+				frgl.setObsStats(ObsStats.failedPassing);
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	/**
+	 * 情報を加工するメソッド
+	 * @param order :命令番号
+	 * @return 各命令番号の手段で加工されたデータ
+	 */
+	private String adjustInfo(String order) {
+		String data = null;
+		long num = 0;
+
+
+		switch (order) {
+
+		// 荷物番号を送るための情報を文字列にまとめる処理
+		case "syncFrglNum":
+			num = (this.fragile.peek()).getFrglNum();
+			String frglNum = String.valueOf(num);
+			data = order + "|" + frglNum;
+			break;
+
+		case "makeFragile":
+			String[] clientInfo = this.deliWaitFrgl.getClientInfo();
+			String[] houseInfo = this.deliWaitFrgl.getHouseInfo();
+				data = order
+						+ "|"
+						+ String.valueOf(this.deliWaitFrgl.getFrglNum())
+						+ "|"
+						+ clientInfo[0]
+						+ "|"
+						+ clientInfo[1]
+						+ "|"
+						+ clientInfo[2]
+						+ "|"
+						+ houseInfo[0]
+						+ "|"
+						+ houseInfo[1]
+						+ "|"
+						+ houseInfo[2]
+						+ "|"
+						+ (this.deliWaitFrgl.getStrTime("receptionTime"))
+						+ "|"
+						+ (this.deliWaitFrgl.getStrTime("sendTime"));
+			break;
+		}
+
+		return data;
+	}
+
+
 
 
 	/*

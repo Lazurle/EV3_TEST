@@ -34,7 +34,7 @@ public class ControlFragile {
 
 	void setOnDeliver(Long num) {
 		fList.setStats(num, DeliStats.delivering);
-		cfs.setState(num, FragileState.ONDELVER);
+		cfs.setState(num, FragileState.ONDELIVER);
 	}
 
 	void setReportedPassing(Long num) {
@@ -90,14 +90,14 @@ public class ControlFragile {
 	}
 
 	Long getOnDeliver() {
-		return cfs.findFragile(FragileState.ONDELVER);
+		return cfs.findFragile(FragileState.ONDELIVER);
 	}
 
 	Long getReturned() {
 		return cfs.findFragile(FragileState.RETURNED);
 	}
 
-	public ObsStats getObs(Long num) {
+	ObsStats getObs(Long num) {
 		return fList.getObs(num);
 	}
 
@@ -106,7 +106,7 @@ public class ControlFragile {
 	}
 
 	void distribute() {
-		Long num = cfs.findFragile(FragileState.RETURNED);
+		Long num = getReturned();
 		if (num != null) {
 			ObsStats oStats = getObs(num);
 			if (oStats == ObsStats.absent) {

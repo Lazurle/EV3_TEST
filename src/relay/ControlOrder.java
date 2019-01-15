@@ -48,12 +48,13 @@ public class ControlOrder {
 		switch (odrNum) {
 		// "protocol|relay"
 		case protocol:
-			relay.judgeProtocol(Receiver.collector, msg[1]);
+			relay.isCorrectProtocol(Receiver.collector, msg[1]);
 			break;
 
 		// "sendFrglNum|20190113012832"
 		case sendFrglNum:
 			relay.saveFragileNum(msg[1]);
+			relay.setLock(Receiver.collector, false);
 			break;
 
 		case sendLock:
@@ -62,6 +63,8 @@ public class ControlOrder {
 
 		case setLockFalse:
 			relay.lock.setLock(false);
+			relay.setLimit(Receiver.collector, 300); // 収集ロボットが、再度共有変数を要求するまでの通信をしない
+			relay.setLock(Receiver.deliver, true); // 収集ロボットが衝突回避を終えて、共有変数をfalseにしたら通信を許可
 			break;
 
 		default:
@@ -73,15 +76,11 @@ public class ControlOrder {
 		switch (odrNum) {
 		// "protocol|relay"
 		case protocol:
-			relay.judgeProtocol(Receiver.deliver, msg[1]);
+			relay.isCorrectProtocol(Receiver.deliver, msg[1]);
 			break;
 
 		case sendHasFrgl:
 			relay.prepareFrgl();
-			break;
-
-		case syncFrglInfo:
-			relay.sendFragile();
 			break;
 
 		case sendLock:
@@ -90,6 +89,7 @@ public class ControlOrder {
 
 		case setLockFalse:
 			relay.lock.setLock(false);
+			relay.setLimit(Receiver.deliver, 500); // 配達ロボットが、再度共有変数を要求するまで通信をしない
 			break;
 
 		// "reportDeliFail|200012241224|absent"
@@ -112,20 +112,11 @@ public class ControlOrder {
 		// syncObs|200012241224|clientman|09064758475284632|2-2|houseman|090244867442749563|1-3
 		case syncObs:
 			relay.saveFrglInfo(m[1], m[2], m[4], m[5], m[7]);
+			relay.setLock(Receiver.collector, true);
 			break;
 
 		default:
 			break;
 		}
 	}
-
-	void setLock(Receiver receiver, Boolean b) {
-		if (receiver == Receiver.collector)
-			relay.lTimerColle.setLock(b);
-		else if (receiver == Receiver.deliver)
-			relay.lTimerDeli.setLock(b);
-		else if (receiver == Receiver.hq)
-			relay.lTimerHQ.setLock(b);
-	}
-
 }
