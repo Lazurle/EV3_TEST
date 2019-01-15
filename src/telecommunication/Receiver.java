@@ -13,9 +13,9 @@ public enum Receiver {
 	 * 指定するアドレス = "btspp://0016534B88B9:1"
 	 * */
 	reception,
-	collector("btspp://0016534DB4C6:1",/*"Collector2"*/"00:16:53:4D:B4:C6"),
-	relay("btspp://0016535DF5AD:1","Relay2"),
-	deliver("btspp://0016535DCAFE:1",/*"Delivery2"*/"00:16:53:5D:CA:FE"),
+	collector("btspp://0016534DB4C6:1","Collector2"/*"00:16:53:4D:B4:C6"*/),
+	relay("btspp://0016535DF5AD:1"),
+	deliver("btspp://0016535DCAFE:1","Delivery2"/*"00:16:53:5D:CA:FE"*/),
 	house,
 	hq;
 

@@ -140,7 +140,7 @@ public final class Telecommunication{
      * @return　送信結果(true:成功,false:失敗)
      */
     private synchronized boolean send(){
-    	final int WAIT=(int)(0.2*this.CHANGE_S);//送信前に少し(0.2秒)待つ
+    	final int WAIT=(int)(0.2f*this.CHANGE_S);//送信前に少し待つ
     	Delay.msDelay(WAIT);
     	try{
     		this.dos.writeUTF(this.sendDetail);
@@ -157,7 +157,9 @@ public final class Telecommunication{
      * @return 受信結果(true:成功,false:失敗)
      */
     private synchronized boolean receive() throws RuntimeException{
-    	/*
+
+    	final int WAIT=(int)(0.05f*this.CHANGE_S);//受信前に少し待つ
+    	Delay.msDelay(WAIT);
 		try{
 			this.receiveDetail = this.dis.readUTF();
 		}catch(IOException ioe){
@@ -166,8 +168,8 @@ public final class Telecommunication{
 		}
 		System.out.printf("receive : %s\n",this.receiveDetail);
 		return true;
-		*/
 
+		/*
     	///////////////////デバック用/////////////////////////////////////////////////////
     	System.out.println("receive...");
     	final int wt=5;
@@ -186,10 +188,13 @@ public final class Telecommunication{
     		throw new RuntimeException("Receive : Debug Exception "+wt+"s");
     	}
     	return true;
+    	*/
     }
     //////////////////////デバック用↓/////////////////////////////////////////////////////
-    private class DebugReceive extends Thread{
+    /*private class DebugReceive extends Thread{
     	public void run(){
+    		final int WAIT=(int)(0.05f*CHANGE_S);//受信前に少し待つ
+        	Delay.msDelay(WAIT);
     		try{
     			receiveDetail = dis.readUTF();
     		}catch(IOException ioe){
@@ -198,7 +203,7 @@ public final class Telecommunication{
     		}
     		System.out.printf("receive : %s\n",receiveDetail);
     	}
-    }
+    }*/
     /////////////////////デバック用↑//////////////////////////////////////////////////////
 
     /**
@@ -227,7 +232,8 @@ public final class Telecommunication{
 	 * @throws IOException :待機時間以内にコネクション確立処理が終了しなかった場合に投げられる
 	 */
 	private boolean getConnect(final Receiver receiver,final int waitTime,final ThreadState threadState) throws IOException{
-		Delay.msDelay(500);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
+		Delay.msDelay(1*this.CHANGE_S);//コネクションを連続で確立しようとすると、エラーの原因になるので少し待つ
+
 		this.active_ComPartner=receiver;
 		this.com_cfou=new Com_ConnectorFunOpenUser();
 		this.com_cfou.start(receiver.getMacAddress(),threadState);//スレッド開始
@@ -262,7 +268,8 @@ public final class Telecommunication{
 		if(threadState!=ThreadState.Run_send && threadState!=ThreadState.Run_receive)
 			return false;
 
-		Delay.msDelay(500);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
+		Delay.msDelay(1*this.CHANGE_S);//コネクションを連続で確立しようとすると、エラーの原因になるので少し待つ
+
 		BTConnector connector = new BTConnector();
 	    System.out.printf("wait connection\n");
 	    this.bt_connection = connector.waitForConnection(waitTime*this.CHANGE_S, BTConnection.RAW);
@@ -315,7 +322,8 @@ public final class Telecommunication{
 		if(threadState!=ThreadState.Run_send && threadState!=ThreadState.Run_receive)
 			return false;
 
-		Delay.msDelay(500);//`通信の際に最初に1秒待ってから通信を行う(コネクションの安定化のため)
+		Delay.msDelay(1*this.CHANGE_S);//コネクションを連続で確立しようとすると、エラーの原因になるので少し待つ
+
 		BTConnector connector = new BTConnector();
 	    System.out.printf("Search connect\n");
 

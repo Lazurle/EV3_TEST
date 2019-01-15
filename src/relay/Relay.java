@@ -11,7 +11,7 @@ import telecommunication.code.Relay_HQ;
 public class Relay {
 	ControlOrder co = new ControlOrder(this);
 	InfoEditor ie = new InfoEditor();
-	ControlFragile cf = new ControlFragile();
+	ControlFragile cf = new ControlFragile(); // コンストラクタの引数に適当な文字列を与えると、本部に配達失敗を報告するところから動く
 	ControlTele ct = new ControlTele();
 	Lock lock = new Lock();
 	ControlLockTimer clt = new ControlLockTimer();
@@ -20,10 +20,9 @@ public class Relay {
 		System.out.println("Start relay!");
 		while (true) {
 			wait(Receiver.deliver);
-			// scanFragileList();
 			wait(Receiver.collector);
 			scanFragileList();
-			Delay.msDelay(2 * 1000);
+			Delay.msDelay(1 * 1000);
 		}
 	}
 
@@ -58,6 +57,7 @@ public class Relay {
 		// return ct.send(receiver, sendDetail, "debug");
 	}
 
+	// 必ずwaitメソッドから呼び出す
 	private String receive(Receiver receiver) {
 		return ct.receive(receiver);
 		// return ct.receive(receiver, "debug");
@@ -69,7 +69,6 @@ public class Relay {
 		if (cf.hasNeedInfo())
 			wait(Receiver.hq);
 		sendStart(cf.getOnDeliver());
-		cf.distribute();
 		sendReturned(cf.getReturned());
 	}
 

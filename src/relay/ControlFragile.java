@@ -13,6 +13,27 @@ public class ControlFragile {
 	HashMap<Long, Integer> hMap = new HashMap<>();
 	ControlFragileState cfs = new ControlFragileState();
 
+	public ControlFragile() {
+	}
+
+	// テスト用コンストラクタ
+	public ControlFragile(String debug) {
+		Long num = 12345678L;
+		String cname = "asdf";
+		String caddr = "1-1";
+		String hname = "zxcv";
+		String haddr = "2-2";
+		// ObsStats oStats = ObsStats.absent;
+		ObsStats oStats = ObsStats.wrongHouse;
+
+		saveFragileNum(num);
+		setNeedInfo(num);
+		saveFragileInfo(num, cname, caddr, hname, haddr);
+		setOnDeliver(num);
+		setReportedPassing(num);
+		setFailed(num, oStats);
+	}
+
 	void saveFragileNum(Long num) {
 		nList.addNum(num);
 		cfs.setState(num, FragileState.NEED_SEND_ARRIVED);
@@ -59,6 +80,7 @@ public class ControlFragile {
 
 	void setReported(Long num) {
 		cfs.setState(num, FragileState.REPORTED);
+		distribute(num);
 	}
 
 	Long getNum() {
@@ -97,6 +119,10 @@ public class ControlFragile {
 		return cfs.findFragile(FragileState.RETURNED);
 	}
 
+	Long getReported() {
+		return cfs.findFragile(FragileState.REPORTED);
+	}
+
 	ObsStats getObs(Long num) {
 		return fList.getObs(num);
 	}
@@ -105,8 +131,7 @@ public class ControlFragile {
 		return hMap.get(num);
 	}
 
-	void distribute() {
-		Long num = getReturned();
+	private void distribute(Long num) {
 		if (num != null) {
 			ObsStats oStats = getObs(num);
 			if (oStats == ObsStats.absent) {

@@ -546,6 +546,7 @@ public class HQ {
 			fragileFile.get(junban).setDeliStats(DeliStats.awaiting);//戻ってきたから配達待ちに更新
 			break;
 		case deliCompReciTime://(中継所)配達完了
+			System.out.println(info + "を中継所から受信しました。");
 			//受信情報：「配達完了 | 201811191720 | 1」
 			//後ろから、配達完了時間、受取人が受取時間
 			//受取時間が＋分して時間を作る、配達完了時間をgetInstance

@@ -36,6 +36,7 @@ public class LockTimer {
 	private Boolean isNoTimeLimit() {
 		int dif = limit - getTimeSec();
 		if (dif > 0) {
+			System.out.println("time limits " + dif + "s"); // debug
 			return false;
 		} else
 			return true;
